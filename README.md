@@ -3,7 +3,9 @@
 
 ## Información del laboratorio
 
-| Campo | Valor |
+<img width="553" height="305" alt="image" src="https://github.com/user-attachments/assets/d5374301-922c-4823-8377-d2f696f38dad" />
+
+| Característica | Valor |
 |---|---|
 | Plataforma | VulNyx |
 | Máquina | Blogger |
@@ -100,9 +102,9 @@ URL de la aplicación: `http://megablog.nyx/wordpress/`.
 
 <img width="710" height="456" alt="image" src="https://github.com/user-attachments/assets/e600caa5-6e20-4849-b635-990ff4a609ca" />
 
-**02 — Aplicación web.** Navegador mostrando la página inicial de WordPress y el dominio `megablog.nyx`.
+**02 - Aplicación web.** Navegador mostrando la página inicial de WordPress y el dominio `megablog.nyx`.
 
-**03 — Resolución del dominio (opcional).** Entrada de `megablog.nyx` en `/etc/hosts`, sin otros datos innecesarios.
+**03 - Resolución del dominio (opcional).** Entrada de `megablog.nyx` en `/etc/hosts`, sin otros datos innecesarios.
 
 <img width="447" height="132" alt="image" src="https://github.com/user-attachments/assets/91017f73-f339-4a2d-ba41-c2ddb334fade" />
 
@@ -176,13 +178,11 @@ La enumeración identificó WordPress 6.3, el tema Twenty Twenty-One 1.9, la cue
 
 <img width="937" height="511" alt="image" src="https://github.com/user-attachments/assets/65b0087e-55bc-467f-91cf-f91ebc63806a" />
 
-**05 — Enumeración con WPScan.** Versión de WordPress y descubrimiento del usuario `peter`.
+**05 - Enumeración con WPScan.** Versión de WordPress y descubrimiento del usuario `peter`.
 
 <img width="832" height="218" alt="image" src="https://github.com/user-attachments/assets/7cd31b21-5a43-4919-b078-0f24dc8c95ac" />
 
-**06 — Confirmación del usuario.** Respuesta de `wp-login.php` al introducir `peter` con una contraseña incorrecta; ocultá cualquier dato sensible.
-
-![06 - Validación del usuario peter](images/06-login-usuario.png)
+**06 - Confirmación del usuario.** Respuesta de `wp-login.php` al introducir `peter` con una contraseña incorrecta; ocultá cualquier dato sensible.
 
 ## 4. Obtención de credenciales
 
@@ -236,8 +236,6 @@ La cuenta tenía permisos para instalar y activar plugins. Esta funcionalidad pe
 <img width="1077" height="448" alt="image" src="https://github.com/user-attachments/assets/b416920f-f0d9-4304-9ba9-216e8e162340" />
 
 **10 — Permisos de instalación.** Menú *Plugins* o pantalla *Add New Plugin*, que demuestra la capacidad de instalar extensiones.
-
-![10 - Instalación de plugins habilitada](images/10-wordpress-plugins.png)
 
 ## 6. Ejecución de código y reverse shell
 
@@ -365,21 +363,11 @@ Root → Flag final
 | Reutilización de la contraseña de base de datos en `root` | Escalada a control total del sistema | Usar contraseñas únicas, fuertes y administradas separadamente para cada servicio y cuenta |
 | WordPress 6.3 y PHP 7.4.33 observados en el laboratorio | Riesgos asociados a versiones antiguas | Mantener WordPress, plugins, temas y PHP en versiones soportadas y actualizadas |
 
-## 11. Checklist antes de publicar
-
-- [ ] Guardar las capturas en la carpeta `images/` con los nombres indicados.
-- [ ] Revisar que las imágenes se visualicen correctamente en GitHub.
-- [ ] Censurar contraseñas, cookies, tokens y datos personales.
-- [ ] Verificar que cada captura corresponda a una acción que efectivamente realizaste.
-- [ ] Si no conservaste una captura, eliminar su referencia o indicar expresamente que es una reproducción del laboratorio.
-- [ ] Priorizar las capturas **01, 02, 05, 08, 09, 12, 13, 14, 16, 18 y 19**; las demás son complementarias.
 
 ## 12. Conclusión
 
-**Blogger** permitió practicar una cadena de ataque completa: reconocimiento, enumeración, obtención de credenciales, acceso administrativo a WordPress, ejecución de código mediante plugins, reverse shell y escalada de privilegios.
-
-El aprendizaje principal fue comprobar cómo **una contraseña reutilizada** puede convertir el compromiso de una aplicación web en el compromiso total del sistema operativo.
+Como conclusión **Blogger** permite practicar una cadena de ataque completa: reconocimiento, enumeración, obtención de credenciales, acceso administrativo a WordPress, ejecución de código mediante plugins, reverse shell y escalada de privilegios.
 
 ---
 
-**Aviso:** writeup elaborado para una máquina intencionalmente vulnerable en un laboratorio autorizado. Las IP, contraseñas y capturas corresponden al entorno de práctica.
+**Aviso:** este documento fue elaborado para una máquina intencionalmente vulnerable en un laboratorio autorizado. Las IP, contraseñas y capturas corresponden al entorno de práctica.
