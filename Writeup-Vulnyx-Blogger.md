@@ -102,9 +102,9 @@ URL de la aplicación: `http://megablog.nyx/wordpress/`.
 
 <img width="710" height="456" alt="image" src="https://github.com/user-attachments/assets/e600caa5-6e20-4849-b635-990ff4a609ca" />
 
-**02 - Aplicación web.** Navegador mostrando la página inicial de WordPress y el dominio `megablog.nyx`.
+- Aplicación web.** Navegador mostrando la página inicial de WordPress y el dominio `megablog.nyx`.
 
-**03 - Resolución del dominio (opcional).** Entrada de `megablog.nyx` en `/etc/hosts`, sin otros datos innecesarios.
+- Resolución del dominio (opcional).** Entrada de `megablog.nyx` en `/etc/hosts`, sin otros datos innecesarios.
 
 <img width="447" height="132" alt="image" src="https://github.com/user-attachments/assets/91017f73-f339-4a2d-ba41-c2ddb334fade" />
 
