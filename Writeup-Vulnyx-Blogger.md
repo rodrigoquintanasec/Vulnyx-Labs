@@ -178,11 +178,11 @@ La enumeración identificó WordPress 6.3, el tema Twenty Twenty-One 1.9, la cue
 
 <img width="937" height="511" alt="image" src="https://github.com/user-attachments/assets/65b0087e-55bc-467f-91cf-f91ebc63806a" />
 
-**05 - Enumeración con WPScan.** Versión de WordPress y descubrimiento del usuario `peter`.
+- Enumeración con WPScan.** Versión de WordPress y descubrimiento del usuario `peter`.
 
 <img width="832" height="218" alt="image" src="https://github.com/user-attachments/assets/7cd31b21-5a43-4919-b078-0f24dc8c95ac" />
 
-**06 - Confirmación del usuario.** Respuesta de `wp-login.php` al introducir `peter` con una contraseña incorrecta; ocultá cualquier dato sensible.
+- Confirmación del usuario.** Respuesta de `wp-login.php` al introducir `peter` con una contraseña incorrecta; ocultá cualquier dato sensible.
 
 ## 4. Obtención de credenciales
 
@@ -215,9 +215,9 @@ hydra -l peter -P /usr/share/wordlists/rockyou.txt \
 
 
 
-**07 — Prueba inicial sin éxito (opcional).** Hydra finalizando el diccionario reducido de 1.000 contraseñas sin encontrar una válida.
+- Prueba inicial sin éxito (opcional).** Hydra finalizando el diccionario reducido de 1.000 contraseñas sin encontrar una válida.
 
-**08 — Contraseña descubierta.** Resultado de Hydra con RockYou completo, mostrando el usuario `peter` y la confirmación del hallazgo. **Censurá la contraseña** antes de publicarla.
+- Contraseña descubierta.** Resultado de Hydra con RockYou completo, mostrando el usuario `peter` y la confirmación del hallazgo. **Censurá la contraseña** antes de publicarla.
 
 <img width="1082" height="216" alt="image" src="https://github.com/user-attachments/assets/b6c6fa93-f117-4f51-9919-27af78c9cbdf" />
 
@@ -231,7 +231,7 @@ http://megablog.nyx/wordpress/wp-admin/
 La cuenta tenía permisos para instalar y activar plugins. Esta funcionalidad permitió pasar del acceso a la aplicación web a la ejecución de código PHP en el servidor.
 
 
-**09 — Acceso administrativo.** Dashboard de WordPress después de iniciar sesión como `peter`.
+- Acceso administrativo.** Dashboard de WordPress después de iniciar sesión como `peter`.
 
 <img width="1077" height="448" alt="image" src="https://github.com/user-attachments/assets/b416920f-f0d9-4304-9ba9-216e8e162340" />
 
@@ -307,13 +307,13 @@ id
 
 La escalada se debió a la reutilización de una contraseña sensible entre la configuración de una aplicación y una cuenta privilegiada del sistema.
 
-**15 — Archivo de configuración localizado.** Terminal mostrando la ruta de `wp-config.php` y sus permisos, si conservaste esa evidencia.
+- Archivo de configuración localizado.** Terminal mostrando la ruta de `wp-config.php` y sus permisos, si conservaste esa evidencia.
 
-**16 — Credenciales de base de datos.** Fragmento de `wp-config.php` con los parámetros `DB_USER` y `DB_PASSWORD`. **Censurá completamente el valor de `DB_PASSWORD`**.
+- Credenciales de base de datos.** Fragmento de `wp-config.php` con los parámetros `DB_USER` y `DB_PASSWORD`. **Censurá completamente el valor de `DB_PASSWORD`**.
 
 <img width="563" height="159" alt="image" src="https://github.com/user-attachments/assets/403da33a-2516-461e-8695-2f1b93d9f0ce" />
 
-**18 — Privilegios confirmados.** Resultado de `whoami` y `id` con `uid=0(root)`.
+- Privilegios confirmados.** Resultado de `whoami` y `id` con `uid=0(root)`.
 
 ## 8. Captura de la flag
 
@@ -327,7 +327,7 @@ ls -la
 **Resultado:** flag de `root` obtenida. Se omite su contenido para evitar spoilers.
 
 
-**19 — Flag final.** Terminal mostrando la ubicación de la flag en `/root`. Podés ocultar el contenido de la flag para evitar spoilers.
+- Flag final.** Terminal mostrando la ubicación de la flag en `/root`. Podés ocultar el contenido de la flag para evitar spoilers.
 
 <img width="303" height="36" alt="image" src="https://github.com/user-attachments/assets/663a1b1d-04bb-4921-8233-34f2c182c97a" />
 
