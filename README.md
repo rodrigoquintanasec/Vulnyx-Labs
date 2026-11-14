@@ -98,11 +98,7 @@ El servicio HTTP alojaba una instalación de WordPress bajo `/wordpress/`. Duran
 URL de la aplicación: `http://megablog.nyx/wordpress/`.
 <img width="632" height="343" alt="image" src="https://github.com/user-attachments/assets/9726e98a-55ea-4970-bff8-1b7b2f74d8d1" />
 
-
-### Capturas recomendadas
-
 <img width="710" height="456" alt="image" src="https://github.com/user-attachments/assets/e600caa5-6e20-4849-b635-990ff4a609ca" />
-
 
 **02 — Aplicación web.** Navegador mostrando la página inicial de WordPress y el dominio `megablog.nyx`.
 
@@ -178,13 +174,11 @@ También se comprobó que el registro público de cuentas estaba deshabilitado.
 
 La enumeración identificó WordPress 6.3, el tema Twenty Twenty-One 1.9, la cuenta `peter` (Peter Miller), el formulario de autenticación y XML-RPC. Estos hallazgos orientaron las pruebas de credenciales; la mera presencia de XML-RPC no demuestra por sí sola una vulnerabilidad explotable.
 
-### Capturas recomendadas
-
 <img width="937" height="511" alt="image" src="https://github.com/user-attachments/assets/65b0087e-55bc-467f-91cf-f91ebc63806a" />
 
 **05 — Enumeración con WPScan.** Versión de WordPress y descubrimiento del usuario `peter`.
 
-![05 - WPScan y usuario peter](images/05-wpscan-peter.png)
+<img width="832" height="218" alt="image" src="https://github.com/user-attachments/assets/7cd31b21-5a43-4919-b078-0f24dc8c95ac" />
 
 **06 — Confirmación del usuario.** Respuesta de `wp-login.php` al introducir `peter` con una contraseña incorrecta; ocultá cualquier dato sensible.
 
@@ -197,6 +191,10 @@ La enumeración identificó WordPress 6.3, el tema Twenty Twenty-One 1.9, la cue
 Primero se preparó una lista de diez contraseñas y, posteriormente, un diccionario con las primeras 1.000 entradas de RockYou, almacenado como `05-Exploitation/Payloads/rockyou-1000.txt`. Ninguna de estas pruebas reducidas permitió encontrar una contraseña válida.
 
 Durante la preparación del ataque se estudiaron los parámetros del formulario HTTP, la cookie de prueba y las condiciones de éxito o fracaso de Hydra.
+
+<img width="306" height="198" alt="image" src="https://github.com/user-attachments/assets/0775f4b8-9601-4d2b-b0ec-c87a3b6c1af2" />
+<img width="1076" height="439" alt="image" src="https://github.com/user-attachments/assets/3b6e94a5-b3c5-45e7-a8d8-8bf570468d64" />
+<img width="1069" height="123" alt="image" src="https://github.com/user-attachments/assets/9cb54cdc-fcb5-4708-a3c7-274602fcf633" />
 
 ### 4.2 Ataque con el diccionario completo
 
@@ -215,15 +213,13 @@ hydra -l peter -P /usr/share/wordlists/rockyou.txt \
 
 > **Nota:** el comando muestra los parámetros utilizados en las pruebas de Hydra. El resultado del ataque con el diccionario completo debe respaldarse con su salida o captura original; no se reproduce aquí una salida de terminal no conservada.
 
-### Capturas recomendadas
+
 
 **07 — Prueba inicial sin éxito (opcional).** Hydra finalizando el diccionario reducido de 1.000 contraseñas sin encontrar una válida.
 
-![07 - Hydra con diccionario reducido](images/07-hydra-prueba-inicial.png)
-
 **08 — Contraseña descubierta.** Resultado de Hydra con RockYou completo, mostrando el usuario `peter` y la confirmación del hallazgo. **Censurá la contraseña** antes de publicarla.
 
-![08 - Hydra y credenciales válidas](images/08-hydra-exito.png)
+<img width="1082" height="216" alt="image" src="https://github.com/user-attachments/assets/b6c6fa93-f117-4f51-9919-27af78c9cbdf" />
 
 ## 5. Acceso al panel de administración
 
@@ -232,14 +228,12 @@ Con las credenciales descubiertas se accedió a:
 ```text
 http://megablog.nyx/wordpress/wp-admin/
 ```
-
 La cuenta tenía permisos para instalar y activar plugins. Esta funcionalidad permitió pasar del acceso a la aplicación web a la ejecución de código PHP en el servidor.
 
-### Capturas recomendadas
 
 **09 — Acceso administrativo.** Dashboard de WordPress después de iniciar sesión como `peter`.
 
-![09 - Dashboard WordPress](images/09-wordpress-dashboard.png)
+<img width="1077" height="448" alt="image" src="https://github.com/user-attachments/assets/b416920f-f0d9-4304-9ba9-216e8e162340" />
 
 **10 — Permisos de instalación.** Menú *Plugins* o pantalla *Add New Plugin*, que demuestra la capacidad de instalar extensiones.
 
@@ -249,11 +243,11 @@ La cuenta tenía permisos para instalar y activar plugins. Esta funcionalidad pe
 
 ### 6.1 Intento inicial: carga directa de PHP
 
-Primero se probó la instalación de un archivo PHP suelto, pero WordPress lo rechazó porque esperaba un paquete ZIP de plugin válido (`PCLZIP_ERR_BAD_FORMAT (-10)`).
+Primero se intentó la instalación de un archivo PHP común, pero WordPress lo rechazó porque esperaba un paquete ZIP de plugin válido (`PCLZIP_ERR_BAD_FORMAT (-10)`).
 
 ### 6.2 Creación e instalación de un plugin válido
 
-A continuación, se creó un plugin de prueba con la cabecera requerida por WordPress, se empaquetó en ZIP y se instaló y activó correctamente. Este paso permitió verificar que la cuenta tenía capacidad de instalar código PHP personalizado.
+A continuación, se creó un plugin de prueba con la cabecera requerida por WordPress, se empaquetó en ZIP y se instaló y activó correctamente. Este paso permitió verificar que la cuenta tenía capacidad de instalar código PHP personalizado. Documentación del procedimiento en: https://hacktricks.wiki/es/index.html
 
 ### 6.3 Obtención de la reverse shell
 
@@ -267,23 +261,15 @@ nc -nlvp 4444
 
 El plugin de laboratorio utilizó una conexión TCP hacia `192.168.0.13:4444`. Al ejecutar su funcionalidad desde WordPress, se obtuvo una **reverse shell** en el servidor.
 
-### Capturas recomendadas
-
-**11 — Error de carga inicial (opcional).** Mensaje `PCLZIP_ERR_BAD_FORMAT` al intentar subir un archivo PHP sin empaquetarlo correctamente.
-
-![11 - Error inicial al cargar PHP](images/11-plugin-error.png)
-
 **12 — Plugin instalado.** Confirmación de instalación y activación del plugin ZIP en WordPress.
 
-![12 - Plugin instalado y activado](images/12-plugin-instalado.png)
+<img width="913" height="224" alt="image" src="https://github.com/user-attachments/assets/c75e07e4-1538-4dae-9a72-cf8f6d4f020f" />
 
-**13 — Reverse shell recibida.** Terminal de Kali con Netcat escuchando en el puerto 4444 y la conexión entrante del servidor.
-
-![13 - Reverse shell en Netcat](images/13-netcat-reverse-shell.png)
+<img width="643" height="165" alt="image" src="https://github.com/user-attachments/assets/49ccc46e-3d6c-4581-9472-08d7c47a220e" />
 
 **14 — Identidad de la shell (recomendado).** Salida de `whoami` y `id` desde la sesión remota, antes de la escalada.
 
-![14 - Usuario inicial de la shell](images/14-shell-identidad.png)
+<img width="493" height="132" alt="image" src="https://github.com/user-attachments/assets/36d5ee41-d9d1-4a88-ab88-411126a7a27a" />
 
 ## 7. Enumeración local y escalada de privilegios
 
@@ -321,25 +307,15 @@ id
 
 **Resultado:** acceso como `root`.
 
-La escalada **no requirió explotar una vulnerabilidad del kernel**: se debió a la reutilización de una contraseña sensible entre la configuración de una aplicación y una cuenta privilegiada del sistema.
-
-### Capturas recomendadas
+La escalada se debió a la reutilización de una contraseña sensible entre la configuración de una aplicación y una cuenta privilegiada del sistema.
 
 **15 — Archivo de configuración localizado.** Terminal mostrando la ruta de `wp-config.php` y sus permisos, si conservaste esa evidencia.
 
-![15 - Localización de wp-config.php](images/15-wp-config-ruta.png)
-
 **16 — Credenciales de base de datos.** Fragmento de `wp-config.php` con los parámetros `DB_USER` y `DB_PASSWORD`. **Censurá completamente el valor de `DB_PASSWORD`**.
 
-![16 - Credenciales en wp-config.php](images/16-wp-config-credenciales.png)
-
-**17 — Autenticación como root.** Terminal después de ejecutar `su root`. No es necesario mostrar la contraseña ingresada.
-
-![17 - Cambio a root](images/17-su-root.png)
+<img width="563" height="159" alt="image" src="https://github.com/user-attachments/assets/403da33a-2516-461e-8695-2f1b93d9f0ce" />
 
 **18 — Privilegios confirmados.** Resultado de `whoami` y `id` con `uid=0(root)`.
-
-![18 - Verificación de root](images/18-root-id.png)
 
 ## 8. Captura de la flag
 
@@ -352,11 +328,10 @@ ls -la
 
 **Resultado:** flag de `root` obtenida. Se omite su contenido para evitar spoilers.
 
-### Captura recomendada
 
 **19 — Flag final.** Terminal mostrando la ubicación de la flag en `/root`. Podés ocultar el contenido de la flag para evitar spoilers.
 
-![19 - Flag de root](images/19-root-flag.png)
+<img width="303" height="36" alt="image" src="https://github.com/user-attachments/assets/663a1b1d-04bb-4921-8233-34f2c182c97a" />
 
 ## 9. Cadena de ataque
 
