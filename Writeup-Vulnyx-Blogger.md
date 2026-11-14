@@ -353,18 +353,8 @@ Reutilización de contraseña → su root
 Root → Flag final
 ```
 
-## 10. Hallazgos y recomendaciones
 
-| Hallazgo | Riesgo | Recomendación |
-|---|---|---|
-| Contraseña de WordPress susceptible a ataque de diccionario | Acceso no autorizado al CMS | Contraseñas robustas, MFA y controles de intentos de autenticación |
-| Cuenta de WordPress con capacidad de instalar plugins | Ejecución de código en el servidor tras comprometer la cuenta | Restringir cuentas administrativas y la instalación de plugins; aplicar mínimo privilegio |
-| Credenciales sensibles en `wp-config.php` accesibles durante la postexplotación | Exposición de secretos de aplicación | Restringir permisos de lectura, limitar acceso al servidor y rotar secretos comprometidos |
-| Reutilización de la contraseña de base de datos en `root` | Escalada a control total del sistema | Usar contraseñas únicas, fuertes y administradas separadamente para cada servicio y cuenta |
-| WordPress 6.3 y PHP 7.4.33 observados en el laboratorio | Riesgos asociados a versiones antiguas | Mantener WordPress, plugins, temas y PHP en versiones soportadas y actualizadas |
-
-
-## 12. Conclusión
+## 10. Conclusión
 
 Como conclusión **Blogger** permite practicar una cadena de ataque completa: reconocimiento, enumeración, obtención de credenciales, acceso administrativo a WordPress, ejecución de código mediante plugins, reverse shell y escalada de privilegios.
 
