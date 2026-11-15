@@ -1,6 +1,8 @@
 # VulNyx — Method | Writeup
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **Blogger** de VulNyx.
 ## Información del laboratorio
+<img width="558" height="322" alt="image" src="https://github.com/user-attachments/assets/94e6c1d9-48f4-42bc-8a78-2b1efcaa2fed" />
+
 | Campo | Información |
 |---|---|
 | Laboratorio | VulNyx — Method |
