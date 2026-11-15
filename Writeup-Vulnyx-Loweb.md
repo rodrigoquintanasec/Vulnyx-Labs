@@ -1,8 +1,8 @@
 # VulNyx — Loweb | Writeup
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **Blogger** de VulNyx.
-<img width="556" height="308" alt="image" src="https://github.com/user-attachments/assets/e6088577-bf9f-4889-bf6d-ee74b0d0087b" />
 
 ## Información del laboratorio
+<img width="556" height="308" alt="image" src="https://github.com/user-attachments/assets/e6088577-bf9f-4889-bf6d-ee74b0d0087b" />
 
 | Información | Detalle |
 |---|---|
