@@ -17,13 +17,13 @@
 
 ## Resumen
 
-La máquina **Method**, del laboratorio autorizado **VulNyx**, se analizó desde Kali Linux (`192.168.0.13`) contra el objetivo `192.168.0.15`. El reconocimiento identificó los servicios **SSH (22/tcp)** y **HTTP (80/tcp)**, este último servido por **lighttpd 1.4.59**. La enumeración web permitió descubrir `/webdav/` y comprobar sus métodos HTTP habilitados.
+La máquina **Method**, de **VulNyx**, se analizó desde Kali Linux (`192.168.0.13`) contra el objetivo `192.168.0.15`. El reconocimiento identificó los servicios **SSH (22/tcp)** y **HTTP (80/tcp)**, este último servido por **lighttpd 1.4.59**. La enumeración web permitió descubrir `/webdav/` y comprobar sus métodos HTTP habilitados.
 
 Las pruebas revelaron que el servidor aceptaba archivos HTML mediante **HTTP PUT**, pero rechazaba otras extensiones. Sin embargo, mediante **HTTP MOVE** fue posible renombrar un archivo cargado de `.html` a `.php`. La interpretación de PHP del lado del servidor quedó confirmada y permitió obtener una **reverse shell como `www-data`**. Posteriormente se recuperó la flag de usuario.
 
-Durante la enumeración local se identificó `/var/backups/webdav.tgz` y, con **pspy64**, se observó una tarea ejecutada como **root** que utilizaba `tar` con el comodín `*` sobre el directorio WebDAV escribible. La técnica **GNU tar Wildcard Injection** permitió confirmar ejecución con `uid=0(root)`, activar el bit SUID de `/bin/bash` y obtener una shell con **`euid=0(root)`** mediante `bash -p`. Finalmente, se recuperó la flag de administrador.
+Durante la enumeración local se identificó `/var/backups/webdav.tgz` y, con **pspy64**, se observó una tarea ejecutada como **root** que utilizaba `tar` con el comodín `*` sobre el directorio WebDAV escribible. La técnica **GNU tar Wildcard Injection** permitió confirmar ejecución con `uid=0(root)`, activar el bit SUID de `/bin/bash` y obtener una shell con **`euid=0(root)`** mediante `bash -p`. Finalmente, se recuperó la flag de root.
 
-**Resultado:** acceso inicial y escalada de privilegios completados. La documentación conserva las evidencias de las pruebas exitosas y fallidas
+**Resultado:** acceso inicial y escalada de privilegios completados. La documentación contiene las evidencias de las pruebas exitosas y fallidas.
 
 ## 1. Reconocimiento de red
 
@@ -101,7 +101,7 @@ El servidor web en el puerto 80 se convirtió en el principal objetivo de enumer
 sudo nmap -O 192.168.0.15 -oA os-fingerprint-192.168.0.15
 ```
 
-Nmap devolvió hipótesis como Linux 4.15–5.19, OpenWrt 21.02 y MikroTik RouterOS 7.2–7.5. **Son coincidencias aproximadas de huella de red, no una identificación concluyente** del sistema operativo. La detección de servicios y la página por defecto aportaron pistas más concretas sobre un entorno Debian.
+Nmap devolvió hipótesis como Linux 4.15–5.19, OpenWrt 21.02 y MikroTik RouterOS 7.2–7.5. Estas son solo coincidencias aproximadas, no una identificación concluyente del sistema operativo. La detección de servicios y la página por defecto aportaron pistas más concretas sobre un entorno Debian.
 
 <img width="1012" height="291" alt="06-os" src="https://github.com/user-attachments/assets/27721f8a-7765-444b-bdca-46c24e24b522" />
 
@@ -123,7 +123,7 @@ Se abrió `http://192.168.0.15/` en el navegador. La respuesta mostraba la pági
 curl -I http://192.168.0.15 | tee http-headers-inicial-192.168.0.15.txt
 ```
 
-Se observó `HTTP/1.1 200 OK`, `Content-Type: text/html`, `Content-Length: 3388` y `Server: lighttpd/1.4.59`. Las cabeceras permitieron confirmar la tecnología y el estado de la respuesta, pero no constituyen por sí solas una vulnerabilidad.
+Se observó `HTTP/1.1 200 OK`, `Content-Type: text/html`, `Content-Length: 3388` y `Server: lighttpd/1.4.59`. Las cabeceras permitieron confirmar la tecnología y el estado de la respuesta, pero no constituyen información relevante.
 
 <img width="637" height="199" alt="08-headers" src="https://github.com/user-attachments/assets/540152b2-6f4d-4a8c-a7d9-b778e416f00d" />
 
@@ -135,7 +135,7 @@ Se observó `HTTP/1.1 200 OK`, `Content-Type: text/html`, `Content-Length: 3388`
 curl -i http://192.168.0.15/robots.txt | tee http-robots-inicial-192.168.0.15.txt
 ```
 
-La solicitud devolvió `404 Not Found`: no se encontró el recurso `/robots.txt`. Esto no implica que no existan otras rutas ocultas.
+La solicitud devolvió `404 Not Found`: no se encontró el recurso `/robots.txt`. Pero esto no implica que no existan otras rutas ocultas.
 
 <img width="696" height="340" alt="09-robots" src="https://github.com/user-attachments/assets/93134f04-1bad-40fa-97e6-06277fdfe8b7" />
 
@@ -149,7 +149,7 @@ gobuster dir -u http://192.168.0.15/ \
   -t 10 -o gobuster-common-192.168.0.15.txt
 ```
 
-Gobuster identificó `/webdav` con `301 Moved Permanently` hacia `/webdav/`. El directorio se convirtió en el principal vector a investigar. Se consideraron diccionarios más amplios, pero la evidencia mostrada corresponde al diccionario `common.txt`.
+Gobuster identificó `/webdav` con `301 Moved Permanently` hacia `/webdav/`. El directorio se convirtió en el principal vector a investigar. Se consideraron diccionarios más amplios pero los resultados fueron los mismos,  la evidencia mostrada corresponde al diccionario `common.txt`.
 
 <img width="979" height="323" alt="10-gobuster" src="https://github.com/user-attachments/assets/424e7411-1642-4022-95d5-aa6b6184e3df" />
 
@@ -195,7 +195,7 @@ El encabezado `Allow` indica métodos anunciados; su uso efectivo debe validarse
 curl -i -X PROPFIND -H 'Depth: 0' http://192.168.0.15/webdav/
 ```
 
-La respuesta `207 Multi-Status` devolvió metadatos XML de la colección, incluido `resourcetype` de colección, sin enumerar sus hijos.
+La respuesta `207 Multi-Status` devolvió metadatos XML de la colección, incluido `resourcetype` de colección pero no más recursos por debajo.
 
 <img width="478" height="468" alt="12-propfind0" src="https://github.com/user-attachments/assets/4a45eb44-78db-4842-9e0e-e63a95022a31" />
 
@@ -210,7 +210,7 @@ curl -i -X PROPFIND \
   | tee http-webdav-depth1.txt
 ```
 
-Se obtuvo de nuevo `207 Multi-Status`. En esa etapa la respuesta mostraba la colección `/webdav/` sin archivos hijos adicionales. `Depth: 1` solicita propiedades de la colección y sus hijos inmediatos, si los hay y son visibles.
+Se obtuvo de nuevo `207 Multi-Status`. En esa etapa la respuesta mostraba la colección `/webdav/` sin archivos por debajo adicionales. `Depth: 1` solicita propiedades de la colección y sus hijos inmediatos, si los hay y son visibles.
 
 <img width="477" height="647" alt="13-propfind1" src="https://github.com/user-attachments/assets/a1238e66-5320-4892-ba8b-4c7d1f073fb6" />
 
@@ -625,8 +625,6 @@ Flags de usuario y administrador
 ## 10. Conclusiones
 
 El laboratorio demostró una cadena de explotación de dos etapas. En la primera, un servicio WebDAV permitió cargar HTML, renombrarlo a PHP y ejecutarlo del lado del servidor, lo que facilitó el acceso inicial como `www-data`. En la segunda, una tarea de respaldo ejecutada como root procesaba archivos controlados por ese usuario mediante una expansión insegura de comodines. La inyección de argumentos de GNU tar permitió ejecutar comandos con UID 0 y activar SUID sobre Bash, obteniendo una shell con privilegios efectivos de root.
-
-La práctica también dejó aprendizajes metodológicos: registrar resultados negativos, diferenciar capacidades anunciadas de capacidades comprobadas, verificar cada transición de impacto y documentar la escalada con evidencias independientes.
 
 
 ## 11. Herramientas utilizadas
