@@ -15,6 +15,62 @@
 | Escalada | Backup privilegiado con GNU tar y wildcard injection → Bash SUID → `euid=0(root)` |
 | Resultado | Flags `user.txt` y `root` obtenidas según el registro de la práctica |
 
+## Resumen
+
+La máquina **Method**, del laboratorio autorizado **VulNyx**, se analizó desde Kali Linux (`192.168.0.13`) contra el objetivo `192.168.0.15`. El reconocimiento identificó los servicios **SSH (22/tcp)** y **HTTP (80/tcp)**, este último servido por **lighttpd 1.4.59**. La enumeración web permitió descubrir `/webdav/` y comprobar sus métodos HTTP habilitados.
+
+Las pruebas revelaron que el servidor aceptaba archivos HTML mediante **HTTP PUT**, pero rechazaba otras extensiones. Sin embargo, mediante **HTTP MOVE** fue posible renombrar un archivo cargado de `.html` a `.php`. La interpretación de PHP del lado del servidor quedó confirmada y permitió obtener una **reverse shell como `www-data`**. Posteriormente se recuperó la flag de usuario.
+
+Durante la enumeración local se identificó `/var/backups/webdav.tgz` y, con **pspy64**, se observó una tarea ejecutada como **root** que utilizaba `tar` con el comodín `*` sobre el directorio WebDAV escribible. La técnica **GNU tar Wildcard Injection** permitió confirmar ejecución con `uid=0(root)`, activar el bit SUID de `/bin/bash` y obtener una shell con **`euid=0(root)`** mediante `bash -p`. Finalmente, se recuperó la flag de administrador.
+
+**Resultado:** acceso inicial y escalada de privilegios completados. La documentación conserva las evidencias de las pruebas exitosas y fallidas
+
+## Índice
+
+- [1. Reconocimiento de red](#1-reconocimiento-de-red)
+  - [1.1 Identificación de la interfaz y del segmento](#11-identificacion-de-la-interfaz-y-del-segmento)
+  - [1.2 Descubrimiento de hosts](#12-descubrimiento-de-hosts)
+  - [1.3 Escaneo completo de puertos TCP](#13-escaneo-completo-de-puertos-tcp)
+  - [1.4 Identificación de versiones](#14-identificacion-de-versiones)
+  - [1.5 Estimación del sistema operativo](#15-estimacion-del-sistema-operativo)
+- [2. Enumeración HTTP](#2-enumeracion-http)
+  - [2.1 Inspección del sitio web](#21-inspeccion-del-sitio-web)
+  - [2.2 Revisión de cabeceras](#22-revision-de-cabeceras)
+  - [2.3 Comprobación de robots.txt](#23-comprobacion-de-robotstxt)
+  - [2.4 Descubrimiento de directorios](#24-descubrimiento-de-directorios)
+- [3. Enumeración del servicio WebDAV](#3-enumeracion-del-servicio-webdav)
+  - [3.1 Enumeración de métodos HTTP](#31-enumeracion-de-metodos-http)
+  - [3.2 Consulta de propiedades con PROPFIND](#32-consulta-de-propiedades-con-propfind)
+  - [3.3 Enumeración de recursos con Depth: 1](#33-enumeracion-de-recursos-con-depth-1)
+  - [3.4 Primer intento de escritura: archivo TXT rechazado](#34-primer-intento-de-escritura-archivo-txt-rechazado)
+  - [3.5 Evaluación automatizada con DAVTest](#35-evaluacion-automatizada-con-davtest)
+- [4. Validación manual de carga, lectura y renombrado](#4-validacion-manual-de-carga-lectura-y-renombrado)
+  - [4.1 Creación y subida de HTML](#41-creacion-y-subida-de-html)
+  - [4.2 Lectura mediante GET y renderizado en navegador](#42-lectura-mediante-get-y-renderizado-en-navegador)
+  - [4.3 Renombrado mediante MOVE](#43-renombrado-mediante-move)
+  - [4.4 Cambio de extensión de HTML a PHP](#44-cambio-de-extension-de-html-a-php)
+  - [4.5 Confirmación de interpretación PHP](#45-confirmacion-de-interpretacion-php)
+- [5. Acceso inicial: reverse shell](#5-acceso-inicial-reverse-shell)
+  - [5.1 Preparación del archivo de conexión](#51-preparacion-del-archivo-de-conexion)
+  - [5.2 Listener y conexión](#52-listener-y-conexion)
+  - [5.3 Flag de usuario](#53-flag-de-usuario)
+- [6. Enumeración local para escalada de privilegios](#6-enumeracion-local-para-escalada-de-privilegios)
+  - [6.1 Inspección de cron y temporizadores](#61-inspeccion-de-cron-y-temporizadores)
+  - [6.2 Metadatos y contenido del backup](#62-metadatos-y-contenido-del-backup)
+  - [6.3 Transferencia de pspy64](#63-transferencia-de-pspy64)
+  - [6.4 Descubrimiento de la tarea vulnerable](#64-descubrimiento-de-la-tarea-vulnerable)
+- [7. Escalada de privilegios: GNU tar Wildcard Injection](#7-escalada-de-privilegios-gnu-tar-wildcard-injection)
+  - [7.1 Preparación de la inyección](#71-preparacion-de-la-inyeccion)
+  - [7.2 Diagnóstico de ejecución privilegiada](#72-diagnostico-de-ejecucion-privilegiada)
+  - [7.3 Activación de SUID y shell privilegiada](#73-activacion-de-suid-y-shell-privilegiada)
+  - [7.4 Flag de administrador](#74-flag-de-administrador)
+- [8. Cadena de ataque resumida](#8-cadena-de-ataque-resumida)
+- [9. Hallazgos y recomendaciones](#9-hallazgos-y-recomendaciones)
+- [10. Conclusiones](#10-conclusiones)
+- [11. Herramientas utilizadas](#11-herramientas-utilizadas)
+
+
+
 ## 1. Reconocimiento de red
 
 ### 1.1 Identificación de la interfaz y del segmento
