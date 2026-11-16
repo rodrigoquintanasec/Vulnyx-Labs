@@ -168,13 +168,13 @@ Se inspeccionaron los directorios encontrados en el navegador.
 
 Accedo a la aplicación del puerto 5000, una web Node.js/Express con un formulario "What is your name?".
 
-![Inspección en navegador puerto 5000](images/14-app-5000.png)
+<img width="716" height="388" alt="image" src="https://github.com/user-attachments/assets/19aa7962-f2a3-4450-9cde-adf5def18b9e" />
 
 *Aplicación VULNYX con un campo de entrada de nombre.*
 
 Al enviar un nombre, la URL incorpora dos parámetros (`name` y `token`) y la página responde con un saludo.
 
-![Ingreso test en puerto 5000](images/15-name-test.png)
+<img width="880" height="478" alt="image" src="https://github.com/user-attachments/assets/18f1c088-a55c-490f-856c-395802db15d1" />
 
 *`?name=test&token=...` → la web responde `Welcome test!`. El parámetro `name` se refleja en la respuesta.*
 
@@ -186,13 +186,13 @@ Al enviar un nombre, la URL incorpora dos parámetros (`name` y `token`) y la p�
 
 Se prueba cómo se comporta cada parámetro. Primero se modifica `name`.
 
-![Cambio valor de name en URL y cambia solo el usuario](images/16-name-change.png)
+<img width="734" height="429" alt="image" src="https://github.com/user-attachments/assets/7331830e-2473-433f-982b-95483caf969b" />
 
 *Cambiar `name=test1` solo altera el usuario mostrado: `Welcome test1!`. *
 
 Al cambiar `token` por un número, no se produce ningún cambio visible.
 
-![Cambio valor de token en URL y no cambia nada](images/17-token-no-change.png)
+<img width="759" height="484" alt="image" src="https://github.com/user-attachments/assets/e0a2f2db-0199-461f-aab3-e76139fc58ac" />
 
 *`token=1` → `eval(1)` devuelve `1` pero no se muestra. Sin cambios en la página.*
 
