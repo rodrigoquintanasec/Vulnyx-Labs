@@ -2,6 +2,7 @@
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina Wicca de VulNyx.
 
 ## Información del laboratorio
+<img width="561" height="314" alt="image" src="https://github.com/user-attachments/assets/4a119a68-7e13-4ae6-828a-63b80f6c5454" />
 
 | Información | Detalle |
 | ----------- | ------- |
