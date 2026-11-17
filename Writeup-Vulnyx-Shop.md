@@ -1,16 +1,8 @@
 # VulNyx — Shop · Writeup
+>Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina Shop de VulNyx.
 
----
-
-## 📌 Scope / Alcance
-
-Laboratorio de pentesting **autorizado** de la plataforma VulNyx, montado en un entorno de red local aislado (VirtualBox). El objetivo es comprometer la máquina **Shop** de forma íntegra: obtener un acceso inicial (foothold), leer la flag de usuario (`user.txt`) y escalar privilegios hasta `root` para leer `root.txt`.
-
-Todas las pruebas se realizan contra una máquina propia en un entorno controlado. No se ataca ningún sistema de terceros.
-
----
-
-## 🧾 Información del objetivo
+## Información del laboratorio
+<img width="433" height="313" alt="image" src="https://github.com/user-attachments/assets/878c215a-e111-44cf-ba20-96f27e1d3089" />
 
 | Campo | Valor |
 |-------|-------|
@@ -42,7 +34,7 @@ Todas las pruebas se realizan contra una máquina propia en un entorno controlad
 
 ## 1. Reconocimiento de red (host discovery)
 
-Antes de tocar el objetivo necesitamos entender **dónde estamos** y **qué hay vivo** en el segmento.
+Antes de interactuar con el objetivo identifico la red para entender dónde estamos y qué hay vivo en el segmento.
 
 ### Identificación del segmento de red
 
@@ -50,9 +42,9 @@ Antes de tocar el objetivo necesitamos entender **dónde estamos** y **qué hay 
 ip -br addr
 ```
 
-![Identificación de segmento de red](images/Identificaci_n_de_segmento_de_red.png)
+<img width="963" height="72" alt="Identificación de segmento de red" src="https://github.com/user-attachments/assets/911e0c18-a575-47bd-bcad-46069c43b1bb" />
 
-**Por qué:** `ip -br addr` muestra las interfaces en formato breve. Confirmamos que nuestra interfaz `eth0` tiene la IP `192.168.0.13/24`. El `/24` nos dice que el segmento es `192.168.0.0/24` (256 direcciones posibles), que será el rango a barrer.
+**Por qué:** `ip -br addr` muestra las interfaces en formato abreviado. Se confirma que nuestra interfaz `eth0` tiene la IP `192.168.0.13/24`. El `/24` indica que el segmento es `192.168.0.0/24` (256 direcciones posibles), que será el rango a barrer.
 
 ### Identificación de la puerta de enlace
 
@@ -60,9 +52,9 @@ ip -br addr
 ip route
 ```
 
-![Identificación de puerta de enlace](images/Identificaci_n_de_puerta_de_enlace.png)
+<img width="963" height="72" alt="Identificación de segmento de red" src="https://github.com/user-attachments/assets/d7e7b79d-52da-4b39-9be2-cd8215dabd72" />
 
-**Por qué:** conocer la gateway (`192.168.0.1`) nos permite entender la topología y descartarla como objetivo. La ruta por defecto confirma que todo el tráfico de salida pasa por ese router.
+**Por qué:** conocer  la puerta de enlace (`192.168.0.1`) permite entender la topología y descartarla como objetivo. La ruta por defecto confirma que todo el tráfico de salida pasa por este router.
 
 ### Descubrimiento de hosts por ARP
 
@@ -70,11 +62,11 @@ ip route
 sudo nmap -sn -PR 192.168.0.0/24 -oA host-discovery-inicial
 ```
 
-![ARP Host Discovery](images/ARP_Host_Discovery.png)
+<img width="536" height="484" alt="image" src="https://github.com/user-attachments/assets/4d88481d-35cc-4661-aa04-542cf836d125" />
 
-**Por qué ARP (`-PR`):** en una red local (mismo dominio de broadcast), el descubrimiento por **ARP** es el más fiable y veloz. A diferencia del ping ICMP —que suele estar filtrado por firewalls— **ningún host puede ignorar ARP** si quiere comunicarse en la LAN. La opción `-sn` desactiva el escaneo de puertos (solo queremos saber qué está vivo).
+**Por qué ARP (`-PR`):** En una red local (mismo dominio de broadcast), el descubrimiento por **ARP** es el más fiable y veloz. A diferencia del ping ICMP —que suele estar filtrado por firewalls— **ningún host puede ignorar ARP** si quiere comunicarse en la LAN. La opción `-sn` desactiva el escaneo de puertos (solo queremos saber qué está activo).
 
-De los 9 hosts detectados, el objetivo es **`192.168.0.9`**, cuya MAC (`08:00:27:...`) pertenece al rango OUI de **Oracle VirtualBox**, delatando que es la VM del laboratorio.
+De los 9 hosts detectados, el objetivo es **`192.168.0.9`**.
 
 ### Listado limpio de hosts vivos
 
@@ -82,9 +74,7 @@ De los 9 hosts detectados, el objetivo es **`192.168.0.9`**, cuya MAC (`08:00:27
 awk '/Status: Up/ {print $2}' host-discovery-inicial.gnmap
 ```
 
-![ARP Host Discovery List](images/ARP_Host_Discovery_List.png)
-
-**Por qué:** `awk` filtra el archivo `.gnmap` (formato *greppable*) para extraer únicamente las IPs con estado `Up`, dejando una lista limpia y reutilizable para los siguientes escaneos.
+<img width="536" height="484" alt="image" src="https://github.com/user-attachments/assets/c96f58b6-311b-465b-91eb-999e198366ff" />
 
 ---
 
@@ -96,7 +86,7 @@ awk '/Status: Up/ {print $2}' host-discovery-inicial.gnmap
 sudo nmap -sS -p- 192.168.0.9 -oA port-scanning-full-tcp-192.168.0.9
 ```
 
-![Descubrimiento de puertos](images/Descubrimiento_de_puertos.png)
+<img width="536" height="484" alt="image" src="https://github.com/user-attachments/assets/17940772-3b55-4302-957f-7ba3bfe38d50" />
 
 **Por qué `-p-` y `-sS`:**
 - `-p-` escanea **los 65535 puertos**. Nunca asumimos que los servicios están en los puertos "típicos": un escaneo parcial puede dejar pasar vectores escondidos en puertos altos.
@@ -109,7 +99,7 @@ sudo nmap -sS -p- 192.168.0.9 -oA port-scanning-full-tcp-192.168.0.9
 | `22/tcp` | SSH |
 | `80/tcp` | HTTP |
 
-Esto define la estrategia: **el 80 es la superficie de ataque para conseguir el foothold**, y el **22 (SSH)** será probablemente la vía de acceso una vez que obtengamos credenciales.
+Esto define la estrategia: **el 80 es la superficie de ataque**, y el **22 (SSH)** será probablemente la vía de acceso una vez que obtengamos credenciales.
 
 ### Detección de sistema operativo
 
@@ -117,7 +107,7 @@ Esto define la estrategia: **el 80 es la superficie de ataque para conseguir el 
 sudo nmap -O 192.168.0.9 -oA os-fingerprint-192.168.0.9
 ```
 
-![Descubrimiento de Sistema Operativo](images/Descubrimiento_de_Sistema_Operativo.png)
+<img width="960" height="296" alt="Descubrimiento de Sistema Operativo" src="https://github.com/user-attachments/assets/576d00e7-00a6-44f7-8a5e-68d44755cb6a" />
 
 **Por qué:** el *fingerprinting* de SO (`-O`) analiza las respuestas de la pila TCP/IP para estimar el sistema. Reporta un kernel Linux, consistente con el Debian que luego confirmaremos por las cabeceras HTTP. Es contexto útil para elegir exploits de escalada adecuados.
 
