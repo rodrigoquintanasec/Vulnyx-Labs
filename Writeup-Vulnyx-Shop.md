@@ -1,4 +1,4 @@
-# VulNyx — Shop · Writeup
+# VulNyx | Shop | Writeup
 >Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina Shop de VulNyx.
 
 ## Información del laboratorio
