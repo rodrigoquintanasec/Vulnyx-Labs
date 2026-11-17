@@ -375,4 +375,4 @@ cat root.txt  # 1c4cddb6c20exxxxxxxxxxxxxxxxxx
 
 ---
 
-*Writeup realizado en un entorno de laboratorio autorizado (VulNyx). Uso exclusivamente educativo.*
+*Writeup realizado en un entorno de laboratorio autorizado (VulNyx).
