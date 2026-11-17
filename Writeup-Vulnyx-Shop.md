@@ -232,8 +232,6 @@ sqlmap -r req.txt -p username --batch --dbs
 
 <img width="970" height="689" alt="Listado de tablas con sqlmap Users" src="https://github.com/user-attachments/assets/594c3a67-588e-4f59-8f71-0c8a50eb3bce" />
 
-<img width="975" height="712" alt="Ya encontrada la vunerabilidad copn sqlmap solicito listar todas las bases de datos" src="https://github.com/user-attachments/assets/a5bc8771-21bf-408c-ab67-da8690df805" />
-
 <img width="226" height="86" alt="Listado fina lde bases de datos listadas con sqlmap" src="https://github.com/user-attachments/assets/5b7355d5-60e1-4e57-b76a-c3efd51bd3e4" />
 
 
