@@ -121,7 +121,7 @@ sudo nmap -O 192.168.0.9 -oA os-fingerprint-192.168.0.9
 curl -I http://192.168.0.9 | tee http-headers-inicial-192.168.0.9.txt
 ```
 
-![Inspección de cabecera HTTP puerto 80](images/Inspecci_n_de_cabecera_http_puerto_80.png)
+<img width="645" height="218" alt="Inspección de cabecera http puerto 80" src="https://github.com/user-attachments/assets/9d12b7dd-d8a9-419b-acdd-140a358a5dda" />
 
 **Por qué:** `curl -I` pide **solo las cabeceras** (método HEAD). Nos revela el stack del servidor: **Apache/2.4.38 (Debian)**. Identificar la versión exacta permite buscar vulnerabilidades conocidas asociadas y entender el entorno (Debian 10 "buster").
 
@@ -131,7 +131,7 @@ curl -I http://192.168.0.9 | tee http-headers-inicial-192.168.0.9.txt
 curl -i http://192.168.0.9/robots.txt | tee http-robots-inicial-192.168.0.9.txt
 ```
 
-![Inspección vía curl de archivo robots.txt](images/Inspecci_n_via_curl_de_archivo_robotstxt.png)
+<img width="679" height="309" alt="Inspección via curl de archivo robotstxt" src="https://github.com/user-attachments/assets/84d36d7c-35a5-4e5f-a276-1a1bae5f24fb" />
 
 **Por qué:** `robots.txt` suele listar rutas que el administrador no quiere indexar… lo que a veces delata directorios interesantes. En este caso devuelve **404 Not Found**, así que se descarta esa vía.
 
@@ -143,7 +143,7 @@ gobuster dir -u http://192.168.0.9 \
   -t 10 -o gobuster-common-192.168.0.9.txt
 ```
 
-![HTTP Directory Enumeration with Gobuster](images/HTTP_Directory_Enumeration_with_Gobuster.png)
+<img width="961" height="466" alt="HTTP Directory Enumeration with Gobuster" src="https://github.com/user-attachments/assets/2ae27ff1-0a20-4796-8ee8-1a026f31f68b" />
 
 **Por qué:** gran parte del contenido web no está enlazado desde la página principal. El *fuzzing* de directorios prueba miles de rutas comunes contra el servidor para descubrir contenido oculto. Hallazgos:
 
@@ -158,13 +158,13 @@ gobuster dir -u http://192.168.0.9 \
 
 El panel de administración:
 
-![Visualización de página administrator en navegador](images/Visualizaci_n_de_pagina_administrator_en_navegador.png)
+<img width="578" height="233" alt="Visualización de pagina js en navegador" src="https://github.com/user-attachments/assets/b0dbdf1c-d3ab-4ce8-911c-561cf2ee6bea" />
 
 Los directorios `/css/`, `/fonts/` y `/js/` responden **403 Forbidden** (el *directory listing* está deshabilitado, no podemos listar su contenido):
 
-![Visualización de página css](images/Visualizaci_n_de_pagina_css_en_navegador.png)
-![Visualización de página fonts](images/Visualizaci_n_de_pagina_fonts_en_navegador.png)
-![Visualización de página js](images/Visualizaci_n_de_pagina_js_en_navegador.png)
+<img width="578" height="233" alt="Visualización de pagina js en navegador" src="https://github.com/user-attachments/assets/1b614486-6275-4928-8a51-6c313bbabaec" />
+<img width="578" height="233" alt="Visualización de pagina js en navegador" src="https://github.com/user-attachments/assets/9ea7bea5-0f76-4f98-b3f4-deb94d0a7198" />
+<img width="578" height="233" alt="Visualización de pagina js en navegador" src="https://github.com/user-attachments/assets/63ebc693-3a33-4454-856d-9588f017d70f" />
 
 **Conclusión de la fase:** el único punto de interacción real es el **formulario de login** en `/administrator/`. Hacia ahí enfocamos el ataque.
 
@@ -176,7 +176,7 @@ Los directorios `/css/`, `/fonts/` y `/js/` responden **403 Forbidden** (el *dir
 
 Interceptamos un intento de login (`username=test`, `password=test`) para conocer la petición exacta:
 
-![Intercepto de query con Burp Suite](images/INTERCEPTO_QUERY_con_burpsuite_panel_administrator.png)
+<img width="639" height="741" alt="INTERCEPTO QUERY con burpsuite panel administrator" src="https://github.com/user-attachments/assets/d1849b19-1852-4801-98f8-5dd3df858112" />
 
 **Por qué:** necesitamos la **petición HTTP cruda** (método, endpoint, cabeceras, cookie de sesión y parámetros) para alimentar a `sqlmap`. Observamos:
 
@@ -192,7 +192,7 @@ Guardamos esa petición cruda en un archivo `req.txt` (desde Burp → *Copy to f
 sqlmap -r req.txt -p username --batch
 ```
 
-![Descubrimiento de vulnerabilidades con sqlmap](images/Descubrimiento_de_vulnerabilidades_con_sqlmap.png)
+<img width="964" height="780" alt="Descubrimiento de vulnerabilidades con sqlmap" src="https://github.com/user-attachments/assets/d9aacd38-7bd2-4f68-8c4d-b3c3a8289c1c" />
 
 **Desglose del comando:**
 - `-r req.txt` → sqlmap lee la petición desde el archivo (hereda URL, cookie y parámetros).
@@ -228,8 +228,14 @@ El flujo de extracción es **acumulativo**: cada paso usa el nombre descubierto 
 sqlmap -r req.txt -p username --batch --dbs
 ```
 
-![Solicito listar todas las bases de datos](images/Ya_encontrada_la_vunerabilidad_copn_sqlmap_solicito_listar_todas_las_bases_de_datos.png)
-![Listado final de bases de datos](images/Listado_fina_lde_bases_de_datos_listadas_con_sqlmap.png)
+<img width="970" height="689" alt="Listado de tablas con sqlmap Users" src="https://github.com/user-attachments/assets/593165cd-be58-479a-80e3-578903598f69" />
+
+<img width="970" height="689" alt="Listado de tablas con sqlmap Users" src="https://github.com/user-attachments/assets/594c3a67-588e-4f59-8f71-0c8a50eb3bce" />
+
+<img width="975" height="712" alt="Ya encontrada la vunerabilidad copn sqlmap solicito listar todas las bases de datos" src="https://github.com/user-attachments/assets/a5bc8771-21bf-408c-ab67-da8690df805" />
+
+<img width="226" height="86" alt="Listado fina lde bases de datos listadas con sqlmap" src="https://github.com/user-attachments/assets/5b7355d5-60e1-4e57-b76a-c3efd51bd3e4" />
+
 
 **Por qué:** `--dbs` enumera todas las bases disponibles. De las cuatro, tres son del sistema (`information_schema`, `mysql`, `performance_schema`) y **`Webapp`** es la de la aplicación → nuestra base de interés.
 
@@ -239,7 +245,7 @@ sqlmap -r req.txt -p username --batch --dbs
 sqlmap -r req.txt -p username --batch -D Webapp --tables
 ```
 
-![Listado de tablas con sqlmap — Users](images/Listado_de_tablas_con_sqlmap_Users.png)
+<img width="970" height="689" alt="Listado de tablas con sqlmap Users" src="https://github.com/user-attachments/assets/afd53ed5-2a0b-4984-9a49-9ee87fa36a7f" />
 
 **Por qué:** `-D Webapp --tables` enumera las tablas de esa base. Resultado: una sola tabla, **`Users`** (ojo con las mayúsculas). Ahí deberían estar las credenciales.
 
@@ -249,28 +255,26 @@ sqlmap -r req.txt -p username --batch -D Webapp --tables
 sqlmap -r req.txt -p username --batch -D Webapp -T Users --dump
 ```
 
-![Volcado de información tabla Users](images/Volcado_de_informaci_n_tabla_Users_en_Shop.png)
-![Listado final de usuarios y contraseñas](images/Listado_final_de_usuarios_y_contrase_a_sqlmap_en_tabla_Users.png)
+<img width="862" height="766" alt="image" src="https://github.com/user-attachments/assets/2be8f34c-7bcc-4dba-a856-2cddf7e9ff9a" />
+<img width="249" height="146" alt="image" src="https://github.com/user-attachments/assets/3f248d0b-b1c7-4f7f-a332-2494fd700c91" />
 
 **Por qué:** `--dump` extrae todo el contenido de la tabla. **Hallazgo crítico:** las contraseñas están almacenadas **en texto plano** (sin hashear), por lo que no hace falta crackear nada:
 
 | id | username | password |
 |----|----------|----------|
-| 1 | peter | `peter123!` |
-| 2 | mike | `mikeblabla` |
-| 3 | bart | `b4rtp0w4` |
-| 4 | liam | `liam@nd3rs0n` |
-
-> 🔎 **Nota didáctica:** almacenar contraseñas en claro es una vulnerabilidad grave por sí misma (**CWE-256 / CWE-312**). Lo correcto sería guardar *hashes* con un algoritmo lento y con sal (bcrypt, Argon2). Este error nos ahorra la fase de cracking con `john`/`hashcat`.
+| 1 | peter | `peterxxxx` |
+| 2 | mike | `mikebxxxx` |
+| 3 | bart | `b4rxxxx` |
+| 4 | liam | `liam@ndxxxxx` |
 
 ### Las credenciales NO servían para la web
 
 Probamos los cuatro usuarios en el panel `/administrator/`. Todos autentican, pero caen en `profile.php` con un cartel **"Under Construction"**: no hay funcionalidad explotable por la web.
 
-![Login con usuario peter](images/Login_con_usuario_peter.png)
-![Login con usuario mike](images/Login_con_usuario_mike.png)
-![Login con usuario bart](images/Login_con_usuario_bart.png)
-![Login con usuario liam](images/Login_con_usuario_liam.png)
+<img width="249" height="146" alt="image" src="https://github.com/user-attachments/assets/dc6fa728-1912-4d42-bde0-bfb105e9cba6" />
+<img width="249" height="146" alt="image" src="https://github.com/user-attachments/assets/c1bc9f4e-a0b1-43bd-9205-32342f75a868" />
+<img width="587" height="297" alt="Login con usuario bart" src="https://github.com/user-attachments/assets/b0117141-8a3c-478e-958e-55071eaffb57" />
+<img width="587" height="297" alt="Login con usuario bart" src="https://github.com/user-attachments/assets/a1d505b5-37db-44a9-bac7-2a80260097c5" />
 
 **Por qué es importante entender esto:** el panel web era un *señuelo*. El verdadero valor de esas credenciales está en el **principio de reutilización de contraseñas** (*password reuse*): probarlas en **otros servicios** del mismo host, concretamente **SSH**.
 
@@ -283,7 +287,9 @@ ssh bart@192.168.0.9
 # password: b4rtp0w4
 ```
 
-![SSH con usuario bart exitoso y flag de usuario](images/SSH_con_credenciales_encontradas_con_usuario_bart_es_exitoso_y_obtengo_flag.png)
+![SSH con usuario bart exitoso y flag de usuario]
+<img width="402" height="124" alt="image" src="https://github.com/user-attachments/assets/8528c910-9857-4e49-9add-3fd9f944bf92" />
+
 
 **Por qué `bart`:** probamos las credenciales extraídas contra el servicio SSH descubierto en la fase 2. El par **`bart:b4rtp0w4`** otorga acceso. Esta es la lección central del lab: **las credenciales de una aplicación suelen reutilizarse para el acceso al sistema**.
 
