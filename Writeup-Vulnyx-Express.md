@@ -685,16 +685,5 @@ Estas van más allá de cada bug puntual y son las que más aportan al criterio 
 
 ---
 
-## Resumen: barrera por vulnerabilidad
-
-| # | Vulnerabilidad | Causa raíz | Barrera que la corta |
-|---|----------------|------------|----------------------|
-| 1 | HTTP Verb Tampering | Autorización atada a un método | Middleware de autz para todos los verbos; 405 por defecto |
-| 2 | SSRF (no ciego) | Fetch a URL controlada por el usuario | Allowlist de destino, bloqueo de rangos internos, sin redirects |
-| 3 | SSTI (Jinja2) | Input concatenado en la plantilla | Plantillas estáticas + contexto parametrizado con autoescape |
-| 4 | Servicio como root | Proceso con privilegios máximos | Usuario de servicio + systemd sandboxing / contenedor |
-| 5 | Exposición de tokens / BOLA | API devuelve secretos y confía en parámetros del cliente | Minimizar datos serializados; autz contra la sesión, no el input |
-
-> **Idea final:** el atacante arma una cadena; el defensor rompe un eslabón. Invertir en *una sola* de estas barreras habría frustrado el camino completo a root.
 
 
