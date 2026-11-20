@@ -1,4 +1,4 @@
-# VulNyx — Blogger | Writeup
+# VulNyx — Blogger
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **Blogger** de VulNyx.
 
 ## Información del laboratorio
