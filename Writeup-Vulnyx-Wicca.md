@@ -1,4 +1,4 @@
-# Wicca | Vulnyx | Writeup
+# Wicca | Vulnyx
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina Wicca de VulNyx.
 
 ## Información del laboratorio
