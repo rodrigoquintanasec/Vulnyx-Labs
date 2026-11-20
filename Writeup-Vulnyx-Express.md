@@ -1,7 +1,6 @@
 # Vulnyx — Express | Writeup
 
-> Writeup de la máquina **Express** de la plataforma [Vulnyx](https://vulnyx.com/). Pentest realizado en un entorno de laboratorio autorizado.
-> El objetivo de este documento no es solo listar comandos, sino explicar **el razonamiento detrás de cada paso**: por qué se toma cada decisión, qué nos dice cada respuesta y cómo encadenar los hallazgos hasta comprometer la máquina.
+> Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **Express** de VulNyx.
 
 ---
 
