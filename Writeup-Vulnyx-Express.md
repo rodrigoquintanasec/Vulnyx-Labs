@@ -6,6 +6,7 @@
 ---
 
 ## Información de la máquina
+<img width="555" height="320" alt="image" src="https://github.com/user-attachments/assets/3646ebfb-a153-46ed-a235-84931ae9bc74" />
 
 | Campo | Valor |
 |-------|-------|
