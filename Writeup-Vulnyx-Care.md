@@ -5,6 +5,8 @@
 
 ## Información de la máquina
 
+<img width="558" height="311" alt="image" src="https://github.com/user-attachments/assets/e5a5dc58-9f68-46de-836a-1f4b624f03c1" />
+
 | Campo | Valor |
 |---|---|
 | **Nombre** | Care |
