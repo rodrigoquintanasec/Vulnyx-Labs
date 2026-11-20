@@ -1,5 +1,5 @@
 # Vulnyx — Care
-> **Aviso legal:** laboratorio de pentesting **autorizado** de la plataforma [Vulnyx](https://vulnyx.com/). Todas las pruebas se realizan en un entorno de laboratorio controlado y con permiso explícito. Este material es con fines educativos.
+> Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **Care** de VulNyx.
 
 ---
 
