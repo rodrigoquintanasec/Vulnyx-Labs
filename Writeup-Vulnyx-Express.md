@@ -61,7 +61,7 @@ ip route
 
 <img width="619" height="53" alt="Identificación puerta de enlace" src="https://github.com/user-attachments/assets/1bcfd9ee-a0cf-4ef5-a367-164e4d882851" />
 
-**Razonamiento:** estamos en `192.168.0.13/24`, con gateway en `192.168.0.1`. Al compartir segmento `/24` con el objetivo, el método de descubrimiento más fiable es **ARP** (capa 2): no depende de ICMP ni de reglas de firewall de capa 3, porque cualquier host que quiera comunicarse en la LAN *tiene* que responder ARP. Usamos `nmap -sn -PR` (Ping scan con ARP Request):
+**Explicación:** estamos en `192.168.0.13/24`, con gateway en `192.168.0.1`. Al compartir segmento `/24` con el objetivo, el método de descubrimiento más fiable es **ARP** (capa 2): no depende de ICMP ni de reglas de firewall de capa 3, porque cualquier host que quiera comunicarse en la LAN *tiene* que responder ARP. Usamos `nmap -sn -PR` (Ping scan con ARP Request):
 
 ```bash
 sudo nmap -sn -PR 192.168.0.0/24 -oA host-discovery-inicial
@@ -114,7 +114,7 @@ El `2+deb12u3` del SSH nos ancla el SO en **Debian 12 (Bookworm)**. Sin credenci
 
 ### 2.1 Inspección inicial
 
-Antes de disparar fuzzers, miramos el sitio "a mano". Tres chequeos rápidos que suelen ahorrar tiempo:
+Antes de disparar fuzzers, miramos el sitio "a mano". Tres chequeos rápidos:
 
 **Cabeceras HTTP** (nos dicen tecnología, fechas, redirecciones):
 
@@ -136,7 +136,7 @@ curl -i http://192.168.0.16/robots.txt | tee http-robots-inicial-192.168.0.16.tx
 
 <img width="1030" height="626" alt="Inspección puerto 80 en navegador Página Apache default" src="https://github.com/user-attachments/assets/1961d843-299d-45b9-adcf-b6906c2ab376" />
 
-**Razonamiento / hallazgo:** no hay `robots.txt`, y la raíz devuelve la **página por defecto de Apache2 ("It works!")**. Esto es una señal, no un fracaso. Una default page significa que **el `VirtualHost` por defecto no apunta a ninguna aplicación real**. En servidores Apache con *name-based virtual hosting*, el sitio "de verdad" a menudo solo responde cuando enviamos la cabecera `Host:` correcta. Anotamos esta hipótesis para validarla más adelante.
+**Hallazgos:** no hay `robots.txt`, y la raíz devuelve la **página por defecto de Apache2 ("It works!")**. Esto es una señal, no un fracaso. Una default page significa que **el `VirtualHost` por defecto no apunta a ninguna aplicación real**. En servidores Apache con *name-based virtual hosting*, el sitio "de verdad" a menudo solo responde cuando enviamos la cabecera `Host:` correcta.
 
 ---
 
@@ -174,7 +174,7 @@ gobuster dir -u http://192.168.0.16/ -w /usr/share/wordlists/dirbuster/directory
 
 ### 2.3 Descubrimiento del Virtual Host `express.nyx`
 
-Vulnyx utiliza por convención el TLD **`.nyx`** con el nombre del laboratorio como hostname. Siendo esta la máquina "Express", el candidato natural es **`express.nyx`**. Lo registramos en `/etc/hosts` apuntando al objetivo:
+Vulnyx utiliza por convención el TLD **`.nyx`** con el nombre del laboratorio como hostname. Siendo esta la máquina "Express", probablemente es **`express.nyx`**. Lo registramos en `/etc/hosts` apuntando al objetivo:
 
 ```bash
 echo "192.168.0.16   express.nyx" | sudo tee -a /etc/hosts
@@ -204,7 +204,7 @@ feroxbuster --url http://express.nyx/ -w /usr/share/wordlists/dirbuster/director
 
 <img width="1274" height="535" alt="feroxbuster recursive scan" src="https://github.com/user-attachments/assets/07741602-5729-4f9a-ade6-9dbf4d6605ca" />
 
-> **Detalle que confunde a todos:** en feroxbuster, `-r` significa *follow redirects*, **no** "recursive". La recursión viene activada de fábrica y se controla la profundidad con `-d`.
+> **Detalle que confunde a todos:** en feroxbuster, `-r` significa *follow redirects*, **no** "recursive". La recursión viene activada por defecto y se controla la profundidad con `-d`.
 
 **Hallazgo clave:** dos archivos JavaScript propios de la aplicación:
 - `http://express.nyx/js/script.js` → lógica del reproductor (UI).
