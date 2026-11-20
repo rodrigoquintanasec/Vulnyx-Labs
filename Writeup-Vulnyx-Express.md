@@ -1,4 +1,4 @@
-# Vulnyx — Express | Writeup
+# Vulnyx — Express
 
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **Express** de VulNyx.
 
