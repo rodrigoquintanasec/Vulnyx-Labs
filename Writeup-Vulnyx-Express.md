@@ -344,7 +344,7 @@ curl -s -X POST http://express.nyx/api/admin/availability \
 
 **Resultado:** `"No connection adapters were found for 'file:///etc/passwd'"`.
 
-**Razonamiento — por qué este error es oro:** ese mensaje es **literal de la librería `requests` de Python**. `requests` solo trae "adapters" para `http://` y `https://`; al no tener uno para `file://`, lanza exactamente ese error. Esto nos dice dos cosas:
+**Razonamiento — por qué este error es importante:** ese mensaje es **literal de la librería `requests` de Python**. `requests` solo trae "adapters" para `http://` y `https://`; al no tener uno para `file://`, lanza exactamente ese error. Esto nos dice dos cosas:
 - El backend que ejecuta el fetch del SSRF **es Python** (coherente con el header `Server: Werkzeug/3.0.4 Python/3.11.2` que vimos en la respuesta del SSRF → **Flask**).
 - **`file://` está descartado.** El SSRF queda limitado a HTTP/HTTPS. No tiene sentido perder tiempo con `gopher://`, `dict://` ni `ftp://`: `requests` tampoco los maneja.
 
@@ -354,7 +354,7 @@ El camino, entonces, no es leer archivos sino **alcanzar servicios HTTP internos
 
 ### 4.4 Escaneo de puertos internos vía SSRF
 
-Recordá el dato de la fase 1.2: externamente **solo** hay 22 y 80. Pero un SSRF nos deja pivotar a `127.0.0.1` del objetivo y tocar servicios que escuchan **solo en loopback**. Usamos el SSRF como un escáner de puertos internos, probando los típicos de aplicaciones web/dev (el default de Flask es **5000**, pero barremos varios):
+Recordar el dato de la fase 1.2: externamente **solo** hay 22 y 80. Pero un SSRF nos deja pivotar a `127.0.0.1` del objetivo y tocar servicios que escuchan **solo en loopback**. Usamos el SSRF como un escáner de puertos internos, probando los típicos de aplicaciones web/dev (el default de Flask es **5000**, pero barremos varios):
 
 ```bash
 for port in 3000 5000 5001 8000 8080 8081 9000 9090 8888 4000 3001; do
@@ -562,10 +562,139 @@ Esta máquina encadena **cuatro debilidades independientes**, cada una de las cu
 | 3 | **SSTI (Jinja2)** en el servicio del puerto 9000 | Entrada de usuario concatenada en una plantilla (`render_template_string` o similar) | Nunca construir plantillas con input del usuario; usar plantillas estáticas con contexto parametrizado y autoescape |
 | 4 | **Servicio ejecutándose como root** | El proceso Flask del 9000 corre con privilegios máximos | Aplicar mínimo privilegio: usuario de servicio dedicado, systemd sandboxing, contenedores |
 
-**Lecciones didácticas del laboratorio:**
+**Lecciones aprendidas:**
 - Una **página por defecto de Apache** no es un callejón sin salida: es una pista de *virtual hosting*. Conocer las convenciones de la plataforma (Vulnyx usa `.nyx`) acelera el descubrimiento.
 - El **código JavaScript del cliente** documenta la API por nosotros. Leerlo es más rentable que fuzzear a ciegas.
 - Los **mensajes de error** son inteligencia: `No connection adapters` delató el backend Python y nos ahorró perseguir esquemas imposibles.
 - Un **SSRF que devuelve el body** se convierte en un escáner y lector de la red interna — mucho más potente que uno ciego.
 - El **encoding** (URL-encode + base64) es la diferencia entre un payload que funciona y uno que se rompe silenciosamente al atravesar capas (JSON → URL → shell).
+
+# Vulnyx — Express | Remediaciones y enfoque defensivo
+
+> Complemento *blue team* del writeup de la máquina **Express**. Esta máquina es un caso de estudio ideal porque **ningún fallo por sí solo otorga root**: es la *cadena* la que compromete el sistema. Cada eslabón tenía una barrera que, de existir, habría cortado el ataque. El atacante necesita que fallen **todas**; el defensor necesita que **una** aguante.
+
+---
+
+**Posibles mejoras de seguridad para aprender**
+
+## 1. HTTP Verb Tampering → Autorización centralizada y *deny by default*
+
+**El fallo:** el control de la `key` vivía solo en el handler de `GET`. El `POST` alcanzaba la misma lógica de datos sin pasar por el guard.
+
+**Lección defensiva:** la autorización **nunca** se ata a un método ni a una ruta puntual; se aplica como middleware antes de tocar la lógica, y lo que no está explícitamente permitido se rechaza.
+
+```javascript
+// MAL: control pegado a un verbo concreto
+app.get('/api/users', (req, res) => {
+  if (req.query.key !== SECRET) return res.status(401).json({error:'nope'});
+  return res.json(users);
+});
+app.post('/api/users', (req, res) => res.json(users)); // ← olvidaron el guard
+
+// BIEN: middleware que corre para TODOS los métodos de la ruta
+const requireAuth = (req, res, next) => { /* valida token/sesión */ next(); };
+app.all('/api/users', requireAuth, usersController);   // all = cualquier verbo
+```
+
+**Regla de oro:** devolver **405 Method Not Allowed** para los verbos no previstos, en lugar de dejar que "caigan" en el handler que sí tiene datos.
+
+---
+
+## 2. SSRF → Allowlist de destino, no blocklist
+
+**El fallo:** el endpoint aceptaba una URL arbitraria y la consultaba server-side. Peor aún: devolvía el *body* (SSRF no ciego) y podía alcanzar `127.0.0.1`.
+
+**Remediaciones en capas** (se aplican todas, no una sola):
+
+- **Allowlist, no blocklist.** No intentes "bloquear IPs malas": siempre se escapa alguna representación (`127.0.0.1`, `0.0.0.0`, `[::1]`, `127.1`, decimal `2130706433`, DNS rebinding). Definí la **lista corta de destinos legítimos** y rechazá todo lo demás.
+- **Resolvé el DNS vos, validá la IP y conectate a esa IP.** Evita el *DNS rebinding* (el dominio resuelve a algo público durante la validación y a `127.0.0.1` en la conexión real).
+- **Bloqueá rangos internos** tras resolver: `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16` (metadata cloud `169.254.169.254`), `::1`, `fc00::/7`.
+- **Restringí el esquema** explícitamente a `http`/`https` (en esta máquina `requests` ya lo hacía sin querer, pero hay que hacerlo a propósito).
+- **Desactivá los redirects** o re-validá cada salto (`allow_redirects=False`): un `302` hacia `http://127.0.0.1` saltea tu validación inicial.
+- **Segmentación de red:** el servicio que hace el fetch no debería poder hablar con `localhost:9000` ni con otros servicios internos. Firewall de egreso y no exponer todo sobre la misma interfaz loopback.
+
+```python
+import ipaddress, socket
+from urllib.parse import urlparse
+
+def url_segura(url):
+    p = urlparse(url)
+    if p.scheme not in ("http", "https"):
+        raise ValueError("esquema no permitido")
+    ip = ipaddress.ip_address(socket.gethostbyname(p.hostname))
+    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+        raise ValueError("destino interno bloqueado")
+    return str(ip)  # conectate a ESTA ip, no al hostname
+```
+
+---
+
+## 3. SSTI → El input del usuario nunca es parte de la plantilla
+
+**El fallo:** el parámetro `name` se concatenaba dentro de la plantilla (`render_template_string(f"Hello, {name}")` o equivalente), de modo que Jinja2 lo **evaluó como código**.
+
+**Lección clave:** separá **plantilla** (estática, de confianza) de **datos** (variables del usuario). El dato entra como *contexto*, nunca como texto de plantilla.
+
+```python
+# MAL: el input ES la plantilla
+render_template_string(f"Hello, {name}!")      # {{7*7}} → 49 → RCE
+
+# BIEN: plantilla fija, el input va como variable con autoescape
+render_template_string("Hello, {{ name }}!", name=name)
+
+# MEJOR: plantilla .html precompilada
+render_template("greet.html", name=name)
+```
+
+**Defensa en profundidad:** si realmente necesitás que usuarios aporten plantillas, usá un motor *logic-less* (Mustache) o un sandbox real (`jinja2.sandbox.SandboxedEnvironment`). Aun así, el sandbox de Jinja2 ha tenido *bypasses*, por lo que la respuesta correcta sigue siendo **no incrustar input de usuario en plantillas**.
+
+---
+
+## 4. Mínimo privilegio → El multiplicador de daño
+
+**El fallo:** el servicio Flask del puerto 9000 corría como **root**. Por eso un SSTI se convirtió en compromiso total en un solo salto, sin fase de escalada.
+
+**Remediación:** ejecutar el servicio con un usuario dedicado y sin privilegios, con *sandboxing* del init. Con systemd es casi gratis:
+
+```ini
+# /etc/systemd/system/music-api.service
+[Service]
+User=musicapp
+Group=musicapp
+NoNewPrivileges=true
+ProtectSystem=strict      # FS de solo lectura salvo lo necesario
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/musicapp/data
+# Idealmente además: contenedor + capabilities mínimas
+```
+
+Con esto, el mismo SSTI habría dado una shell como `musicapp`, y recién ahí empezaría una fase de escalada de privilegios.
+
+---
+
+## 5. Lecciones de arquitectura (las que no se ven en un solo fallo)
+
+Estas van más allá de cada bug puntual y son las que más aportan al criterio defensivo:
+
+- **Excessive Data Exposure (OWASP API3):** `/api/users` devolvía el `token` de *todos* los usuarios. Una API jamás debe serializar secretos en la respuesta. Aunque el verb tampering no existiera, devolver tokens ya es un fallo grave por sí mismo.
+- **Secretos en el cliente = secretos públicos:** el patrón `/api/users?key=${secretKey}` asume que la key del front es secreta. Todo lo que llega al navegador es visible. La autenticación real se hace con sesiones/tokens server-side, no con una "key mágica" en JavaScript.
+- **Broken Object Level Authorization (OWASP API1):** el SSRF usaba `id:18, token:<admin>` sin verificar que ese token corresponde a ese `id` ni que el rol realmente autoriza la acción. La autorización se valida contra la sesión del servidor, no contra parámetros que el cliente controla.
+- **Defensa en profundidad:** cada eslabón roto tenía una barrera que lo habría cortado — autorización centralizada (corta el paso 1), allowlist SSRF (corta 2–4), plantillas seguras (corta 5), mínimo privilegio (degrada el impacto final).
+- **Monitoreo y *rate limiting*:** un barrido de puertos internos vía SSRF, o cientos de `POST /api/users`, deberían disparar alertas. El *logging* de requests anómalas más un límite de tasa dan tiempo de reacción aunque el bug exista.
+
+---
+
+## Resumen: barrera por vulnerabilidad
+
+| # | Vulnerabilidad | Causa raíz | Barrera que la corta |
+|---|----------------|------------|----------------------|
+| 1 | HTTP Verb Tampering | Autorización atada a un método | Middleware de autz para todos los verbos; 405 por defecto |
+| 2 | SSRF (no ciego) | Fetch a URL controlada por el usuario | Allowlist de destino, bloqueo de rangos internos, sin redirects |
+| 3 | SSTI (Jinja2) | Input concatenado en la plantilla | Plantillas estáticas + contexto parametrizado con autoescape |
+| 4 | Servicio como root | Proceso con privilegios máximos | Usuario de servicio + systemd sandboxing / contenedor |
+| 5 | Exposición de tokens / BOLA | API devuelve secretos y confía en parámetros del cliente | Minimizar datos serializados; autz contra la sesión, no el input |
+
+> **Idea final:** el atacante arma una cadena; el defensor rompe un eslabón. Invertir en *una sola* de estas barreras habría frustrado el camino completo a root.
+
 
