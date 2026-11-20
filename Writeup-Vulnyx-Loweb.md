@@ -1,4 +1,4 @@
-# VulNyx — Loweb | Writeup
+# VulNyx — Loweb
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **Loweb** de VulNyx.
 
 ## Información del laboratorio
