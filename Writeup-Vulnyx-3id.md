@@ -1,6 +1,8 @@
 # Vulnyx — 3id
 > Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **3id** de VulNyx.
 
+<img width="556" height="312" alt="image" src="https://github.com/user-attachments/assets/772998f4-d4a6-4de0-a89c-3e007d5ecbf3" />
+
 | Característica | Valor |
 |---|---|
 | Plataforma | VulNyx |
