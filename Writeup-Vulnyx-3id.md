@@ -1,13 +1,12 @@
 # Vulnyx — 3id (EidGreetings) · Writeup didáctico
 
-> **Dificultad:** Media
-> **SO:** Debian 10 (kernel 4.19.0-27-amd64)
-> **IP objetivo:** `192.168.0.18`
-> **IP atacante (Kali):** `192.168.0.13`
-> **Resumen de la cadena:** Host discovery → escaneo de puertos → enumeración web → descubrimiento de vhost (`beta.3id.nyx`) → fuga de usuario (`alouch`) → fuerza bruta de login → **IDOR** que filtra un parámetro de debug → **SSTI (Jinja2)** → **bypass de WAF** por blacklist → RCE como `www-data` → **abuso de ACL** sobre `authorized_keys` → `alouch` por SSH → **sudo + GTFOBins `less`** → **root**.
-
-> 📁 **Nota sobre las imágenes:** todas las capturas se referencian con rutas relativas `images/<nombre>.png`. Creá una carpeta `images/` junto a este `.md` y colocá ahí los screenshots con los nombres indicados para que se vean al publicar en GitHub.
-
+| Característica | Valor |
+|---|---|
+| Plataforma | VulNyx |
+| Máquina | 3id |
+| Objetivo | `192.168.0.18` |
+| Atacante | `192.168.0.13` |
+| Dominio virtual | `beta.3id.nyx` |
 ---
 
 ## 0. Índice
